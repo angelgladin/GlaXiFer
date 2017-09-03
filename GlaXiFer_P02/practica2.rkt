@@ -60,12 +60,12 @@
        (finales (listof symbol?))])
 
 ;; Función auxiliar que verifica si un elemento pertenece a una lista.
-;; contiene: list any -> boolean
-(define (contiene? l e)
+;; lista-contiene: list any -> boolean
+(define (lista-contiene? l e)
   (match l
     ['() #f]
     [(cons x xs) (if (equal? e x) #t
-                     (contiene? xs e))]))
+                     (lista-contiene? xs e))]))
 
 ;; Función que verifica que un afd está bien construido. Verifica que el símbolo inicial y el conjunto
 ;; de símbolos finales pertenecen al conjunto de estados.
@@ -76,8 +76,8 @@
           (letrec ([sub-conj? (λ (l1 l2)
                                 (match l1
                                   ['() #t]
-                                  [(cons x xs) (and (contiene? l2 x) (sub-conj? xs l2))]))])
-            (and (contiene? estados q0) (sub-conj? f estados)))]))
+                                  [(cons x xs) (and (lista-contiene? l2 x) (sub-conj? xs l2))]))])
+            (and (lista-contiene? estados q0) (sub-conj? f estados)))]))
 
 ;; Función de transición de un autómana, en este caso ésta es la que está en
 ;; la especificación de la tarea.
@@ -97,14 +97,16 @@
                           (match cad
                             [(cons x '()) (transicion q x)]
                             [(cons x xs) (ult (transicion q x) xs)]))])
-            (contiene? finales (ult q0 lst)))]))
+            (lista-contiene? finales (ult q0 lst)))]))
 
 ; ------------------------------------------------------------------------------------------------ ;
+
+;; Predicado que evalua cualquier tipo de dato como verdadero.
+(define (any? a) #t)
 
 ;; TDA para representar una gramática de arreglos.
 ;; Se tienen constructores que permiten definir un arreglo, para especificar la operación de agregar 
 ;; un elemento y un tercero para obtener elemento.
-(define (any? a) #t)
 (define-type arreglo
   [arrg (tipo procedure?) (dim integer?) (elems (listof any?))]
   [agrega-a (e any?) (a arreglo?) (i integer?)]
@@ -159,9 +161,26 @@
 ;; determinar si un elemento está contenido en el conjunto, agregar un elemento, unir conjunto, 
 ;; intersectar conjunto y calcular la diferencia.
 (define-type conjunto
-   [tipo-conjunto-no-implementado])
+  [cjto (l (listof any?))]
+  [esvacio? (c conjunto?)]
+  [contiene? (c conjunto?) (e any?)]
+  [agrega-c (c conjunto?) (e any?)]
+  [union (c1 conjunto?) (c2 conjunto?)]
+  [interseccion (c1 conjunto?) (c2 conjunto?)]
+  [diferencia (c1 conjunto?) (c2 conjunto?)])
 
 ;; Función que evalúa expresiones de tipo conjunto.
 ;; calc-c: conjunto -> conjunto
 (define (calc-c cto)
-   (error 'calc-c "Función no implementada"))
+  (let* ([cjto->lista (λ (c) (match c [(cjto l) l]))]
+         [quita-repetidos (λ (l) (foldr (λ (v lc) (if (lista-contiene? lc v) lc (cons v lc))) '() l))]
+         [union-aux (λ (l1 l2) (foldr (λ (v l) (if (lista-contiene? l1 v) l (cons v l))) '() l2))]
+         [inters-aux (λ (l1 l2) (foldr (λ (v l) (if (lista-contiene? l1 v) (cons v l) l)) '() l2))])
+    (type-case conjunto cto
+      [cjto (l) (cjto (quita-repetidos l))]
+      [esvacio? (c) (null? (cjto->lista c))]
+      [contiene? (c e) (lista-contiene? (cjto->lista c) e)]
+      [agrega-c (c e) (if (lista-contiene? (cjto->lista c) e) c (cjto (append (cjto->lista c) (list e))))]
+      [union (c1 c2) (cjto (append (cjto->lista c1) (union-aux (cjto->lista c1) (cjto->lista c2))))]
+      [interseccion (c1 c2) (cjto (inters-aux (cjto->lista c1) (cjto->lista c2)))]
+      [diferencia (c1 c2) (cjto (remove* (cjto->lista c2) (cjto->lista c1)))])))
