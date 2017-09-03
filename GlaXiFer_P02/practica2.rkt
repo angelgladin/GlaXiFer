@@ -36,7 +36,6 @@
     [(div f g) (div (evalua f v) (evalua g v))] 
     [(pot f n) (pot (evalua f v) n)]))
 
-
 ;; Función que regresa la derivada de una función.
 ;; deriva: funcion -> funcion
 (define (deriva f)
@@ -54,18 +53,51 @@
 ;; Se tiene un único constructor para representar autómatas finitos deterministas como la quintúpla
 ;; correspondiente.
 (define-type automata
-   [tipo-automata-no-implementado])
+  [afd (estados (listof symbol?))
+       (alfabeto (listof symbol?))
+       (inicial symbol?)
+       (transicion procedure?)
+       (finales (listof symbol?))])
+
+;; Función auxiliar que verifica si un elemento pertenece a una lista.
+;; contiene: list any -> boolean
+(define (contiene? l e)
+  (match l
+    ['() #f]
+    [(cons x xs) (if (equal? e x) #t
+                     (contiene? xs e))]))
 
 ;; Función que verifica que un afd está bien construido. Verifica que el símbolo inicial y el conjunto
 ;; de símbolos finales pertenecen al conjunto de estados.
 ;; verifica: automata -> boolean
 (define (verifica atm)
-   (error 'verifica "Función no implementada"))
+   (type-case automata atm
+     [afd (estados _ q0 _1 f)
+          (letrec ([sub-conj? (λ (l1 l2)
+                                (match l1
+                                  ['() #t]
+                                  [(cons x xs) (and (contiene? l2 x) (sub-conj? xs l2))]))])
+            (and (contiene? estados q0) (sub-conj? f estados)))]))
+
+;; Función de transición de un autómana, en este caso ésta es la que está en
+;; la especificación de la tarea.
+;; transicion: symbol -> symbol
+(define (transicion estado simbolo)
+  (match estado
+    ['p (if (symbol=? 'a simbolo) 'q 'r)]
+    ['q (if (symbol=? 'a simbolo) 'q 'r)]
+    ['r 'r]))
 
 ;; Predicado que dado un afd y una lista de símbolos que representan una expresión, deterimina si es
 ;; aceptada por el autómata.
 (define (acepta? atm lst)
-   (error 'acepta? "Función no implementada"))
+   (type-case automata atm
+     [afd (e a q0 transicion finales)
+          (letrec ([ult (λ (q cad)
+                          (match cad
+                            [(cons x '()) (transicion q x)]
+                            [(cons x xs) (ult (transicion q x) xs)]))])
+            (contiene? finales (ult q0 lst)))]))
 
 ; ------------------------------------------------------------------------------------------------ ;
 
