@@ -21,7 +21,6 @@
 (test (evalua (sum (cte 666) (x)) 666) (sum (cte 666) (cte 666)))
 (test (evalua (div (x) (x)) 666) (div (cte 666) (cte 666)))
 
-#| ... Aquí van las pruebas (Borrar este comentario) ... |#
 
 ;; Pruebas para deriva
 (test (deriva (x)) (cte 1))
@@ -38,13 +37,23 @@
 (test (deriva (pot (mul (cte 2) (x)) 2))
       (mul (mul (cte 2) (pot (mul (cte 2) (x)) 1)) (sum (mul (cte 2) (cte 1)) (mul (x) (cte 0)))))
 
-#| ... Aquí van las pruebas (Borrar este comentario) ... |#
 
 ;; Pruebas para verifica
+;; Se creó una función anónima que lo única que hace es devolver un símbolo constante.
+(test (verifica (afd '(p q r s t) '(a b) 'p (λ () 'a) '(q))) #t)
+(test (verifica (afd '(p q r) '(a b) 'r (λ () 'a) '(p q r))) #t)
+(test (verifica (afd '(p q r) '(a b) 'q (λ () 'a) '(r))) #t)
+(test (verifica (afd '(p q r s t) '(a b) 'a (λ () 'a) '(b))) #f)
+(test (verifica (afd '(p q r) '(a b) 'b (λ () 'a) '(q))) #f)
 
-#| ... Aquí van las pruebas (Borrar este comentario) ... |#
 
 ;; Pruebas para acepta?
+(test (acepta? (afd '(p q r) '(a b) 'p transicion '(q)) '(a a)) #t)
+(test (acepta? (afd '(p q r) '(a b) 'p transicion '(q)) '(a)) #t)
+(test (acepta? (afd '(p q r) '(a b) 'p transicion '(q)) '(a a b a)) #f)
+(test (acepta? (afd '(p q r) '(a b) 'p transicion '(q)) '(b a b)) #f)
+(test (acepta? (afd '(p q r) '(a b) 'p transicion '(q)) '(b b b)) #f)
+
 
 #| ... Aquí van las pruebas (Borrar este comentario) ... |#
 
