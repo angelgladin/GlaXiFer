@@ -65,7 +65,13 @@
 (test (calc-a (obten-a a 2)) 3)
 (test (calc-a (obten-a a 0)) 1)
 
-#| ... Aquí van las pruebas (Borrar este comentario) ... |#
 
 ;; Pruebas para calc-c
-#| ... Aquí van las pruebas (Borrar este comentario) ... |#
+(define a1 (cjto '(1 7 2 9)))
+(define b2 (cjto '(1 2 3 4)))
+(test (calc-c (cjto '(1 1 7 2 9))) (cjto '(1 7 2 9)))
+(test (calc-c (esvacio? a)) #f)
+(test (calc-c (contiene? a 1)) #t)
+(test (calc-c (agrega-c a 9)) (cjto '(1 7 2 9)))
+(test (calc-c (union a b)) (cjto '(1 7 2 9 3 4)))
+(test (calc-c (interseccion a b)) (cjto '(1 2)))
