@@ -104,13 +104,49 @@
 ;; TDA para representar una gramática de arreglos.
 ;; Se tienen constructores que permiten definir un arreglo, para especificar la operación de agregar 
 ;; un elemento y un tercero para obtener elemento.
+(define (any? a) #t)
 (define-type arreglo
-   [tipo-arreglo-no-implementado])
+  [arrg (tipo procedure?) (dim integer?) (elems (listof any?))]
+  [agrega-a (e any?) (a arreglo?) (i integer?)]
+  [obten-a (a arreglo?) (i integer?)])
+
+;; Función auxiliar que devuelve el arreglo anidado de agrega-a y obten-a
+;; obtener-lista-anidada: arr -> arr
+(define (obtener-lista-anidada arr)
+  (type-case arreglo arr
+    [arrg (t n elems) elems]
+    [agrega-a (e a i) (obtener-lista-anidada a)]
+    [obten-a (a i) (obtener-lista-anidada a)]))
+
+(define (obtener-tipo-dato arr)
+  (type-case arreglo arr
+    [arrg (t n elems) t]
+    [agrega-a (e a i) (obtener-tipo-dato a)]
+    [obten-a (a i) (obtener-tipo-dato a)]))
+
+(define (agrega-aux pos e l)
+  (if (= pos 0)
+      (cons e (cdr l))
+      (cons (car l) (agrega-aux (sub1 pos) e (cdr l)))))
 
 ;; Función que evalúa expresiones de tipo arreglo.
 ;; calc-a: arreglo -> arreglo
 (define (calc-a arr)
-   (error 'calc-a "Función no implementada"))
+  (type-case arreglo arr
+    [arrg (tipo dim elems) (cond
+                             [(not (equal? dim (length elems))) (error "Dimensión inválida")]
+                             [(not (equal? elems (filter tipo elems))) (error "Los elementos no son del tipo especificado.")]
+                             [arr])]
+    [agrega-a (e a i) (let ([arreglo-anidado (obtener-lista-anidada a)])
+                        (cond
+                          [(not (and (>= i 0) (< i (length arreglo-anidado)))) (error "Índice inválido")]
+                          [(not ((obtener-tipo-dato a) e)) (error "Los elementos no son del tipo especificado.")]
+                          [(arrg (obtener-tipo-dato a) (length arreglo-anidado) (agrega-aux i e arreglo-anidado))]))]
+    [obten-a (a i) (let ([arreglo-anidado (obtener-lista-anidada a)])
+                     (if (not (and (>= i 0) (< i (length arreglo-anidado))))
+                         (error "índice inválido")
+                         (list-ref arreglo-anidado i)))]))
+
 
 ; ------------------------------------------------------------------------------------------------ ;
 

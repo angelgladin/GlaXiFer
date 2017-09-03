@@ -61,8 +61,8 @@
 (define b (arrg number? 6 '(1 2 3 4 5 6)))
 (test (calc-a b) (arrg number? 6 '(1 2 3 4 5 6)))
 (test (calc-a (agrega-a 2 a 4)) (arrg number? 5 '(1 2 3 4 2)))
-(test (calc-a (agrega-a 666 a 0)) (arrg number? 5 '(666 1 2 3 4)))
-(test (calc-a (obten-a 2 a)) 3)
+(test (calc-a (agrega-a 666 a 0)) (arrg number? 5 '(666 2 3 4 5)))
+(test (calc-a (obten-a a 2)) 3)
 
 #| ... Aquí van las pruebas (Borrar este comentario) ... |#
 
