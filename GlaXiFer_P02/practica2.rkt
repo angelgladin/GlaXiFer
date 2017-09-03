@@ -111,19 +111,23 @@
   [obten-a (a arreglo?) (i integer?)])
 
 ;; Función auxiliar que devuelve el arreglo anidado de agrega-a y obten-a
-;; obtener-lista-anidada: arr -> arr
+;; obtener-lista-anidada: arr -> list
 (define (obtener-lista-anidada arr)
   (type-case arreglo arr
     [arrg (t n elems) elems]
     [agrega-a (e a i) (obtener-lista-anidada a)]
     [obten-a (a i) (obtener-lista-anidada a)]))
 
+;; Función auxiliar que devuelve el tipo de dato anidado de agrega-a y obten-a
+;; obtener-tipo-dato: arr -> arr
 (define (obtener-tipo-dato arr)
   (type-case arreglo arr
     [arrg (t n elems) t]
     [agrega-a (e a i) (obtener-tipo-dato a)]
     [obten-a (a i) (obtener-tipo-dato a)]))
 
+;; Función auxiliar que modifica la i-ésima entrada de la lista y pone el elemento dado.
+;; agrega-aux: list -> list
 (define (agrega-aux pos e l)
   (if (= pos 0)
       (cons e (cdr l))
@@ -143,9 +147,9 @@
                           [(not ((obtener-tipo-dato a) e)) (error "Los elementos no son del tipo especificado.")]
                           [(arrg (obtener-tipo-dato a) (length arreglo-anidado) (agrega-aux i e arreglo-anidado))]))]
     [obten-a (a i) (let ([arreglo-anidado (obtener-lista-anidada a)])
-                     (if (not (and (>= i 0) (< i (length arreglo-anidado))))
-                         (error "índice inválido")
-                         (list-ref arreglo-anidado i)))]))
+                     (if (and (>= i 0) (< i (length arreglo-anidado)))
+                         (list-ref arreglo-anidado i)
+                         (error "índice inválido")))]))
 
 
 ; ------------------------------------------------------------------------------------------------ ;
