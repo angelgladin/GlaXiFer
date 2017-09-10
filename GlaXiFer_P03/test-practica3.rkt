@@ -51,8 +51,8 @@
    
 ;; Pruebas para  interp
 
-(test (interp (parse '(foo))) (foo))
-(test (interp(parse '(baz))) (baz))
+(test (interp (parse '(foo))) (error "Identificador libre."))
+(test (interp(parse '(baz))) (error "Identificador libre."))
 (test (interp(parse (666))) (666))
 (test (interp(parse (-666))) (666))
 (test (interp(parse '(/ 1 2))) (/ 1 2)))
