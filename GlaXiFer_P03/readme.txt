@@ -39,7 +39,7 @@ Expresiones aceptadas por la gramática del lenguaje WAE.
    (op modulo (list (num 666) (num 2)))
    (op min (list (num 666) (num 666) (num 666) (num 0)))
    (op max (list (num 666) (num 666) (num 666) (num 0)))
-   (op  (list (num 1) (num 2) (num 2) (num 2)))
+   (op * (list (num 1) (num 2) (num 2) (num 2)))
    (op expt (list (num 2) (num 2)))
    (op + (list (num 666) (op - (list (num 666) (num 666)))))
 
