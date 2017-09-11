@@ -20,8 +20,7 @@
 ;; Potencia multiparamétrica.
 ;; Función que recibe n elementos, a diferencia expt que solo recibe 2 elementos.
 (define mexpt
-  (lambda nums
-    (foldr expt (car nums) (cdr nums))))
+  (λ nums (foldr expt (car nums) (cdr nums))))
 
 ;; Analizador sintáctico para WAE.
 ;; Dada una s-expresión, regresa el árbol de sintaxis abstracta correspondiente, es decir, construye 
