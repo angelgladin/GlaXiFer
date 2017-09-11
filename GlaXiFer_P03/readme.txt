@@ -50,7 +50,7 @@ Expresiones aceptadas por la gramática del lenguaje WAE.
 
 5. Expresiones con with* válidas.
    (with* (list (binding 'a (num 0)) (binding 'b (id 'a))) (op + (list (id 'b) (id 'b))))
-   (with* (list (binding 'a (num 0)) (binding 'b (id 1))) (op + (list (id 'a) (id 'b))))
+   (with* (list (binding 'a (num 0)) (binding 'b (num 1))) (op + (list (id 'a) (id 'b))))
    (with* (list (binding 'a (num 0)) (binding 'b (num 1)) (binding 'c (num 2))) (op + (list (id 'a) (id 'b) (id 'c))))
 
 .
