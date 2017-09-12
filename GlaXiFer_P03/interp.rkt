@@ -11,4 +11,14 @@
 ;; Función que implementa el algoritmo de sustitución.
 ;; subst: WAE symbol WAE -> WAE
 (define (subst expr sub-id val)
-   (error 'subst "Función no implementa."))
+  (match expr
+    [(num n) expr]
+    [(op f (list l r)) (op f (list (subst l sub-id val) (subst r sub-id val)))]
+    [(with (list bound-id named-expr) bound-body)
+         (if(symbol=? bound-id sub-id)
+            expr
+            (with bound-id named-expr
+                  (subst bound-body sub-id val)))]
+    [(id v) (if(symbol=? v sub-id)
+               val
+               expr)]))
