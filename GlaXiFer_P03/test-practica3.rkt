@@ -100,4 +100,5 @@
 
 ;; Pruebas para  subst (opcional)
 
-#| ... Aquí van las pruebas (Borrar este comentario) ... |#
+(test (subst (op + (list (id 'a) (num 3))) 'a (num 4))
+      (op + (list (num 4) (num 3))))
