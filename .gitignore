@@ -34,3 +34,7 @@ TAGS
 
 # coredumps
 *.core
+
+# Packages
+*.zip
+*.tar.gz
