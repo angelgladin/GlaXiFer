@@ -61,8 +61,8 @@
    
 ;; Pruebas para  interp
 
-(test/exn (interp (parse 'foo)) "Función no implementada.")
-(test/exn (interp (parse 'baz)) "Función no implementada.")
+(test/exn (interp (parse 'foo)) "Variable Libre.")
+(test/exn (interp (parse 'baz)) "Variable Libre.")
 (test (interp(parse 666)) 666)
 (test (interp(parse -666)) -666)
 (test (interp(parse (/ 1 2))) (/ 1 2))
