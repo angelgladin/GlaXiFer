@@ -60,43 +60,36 @@
               (op + (list (id 'a) (id 'b) (id 'c)))))
    
 ;; Pruebas para  interp
-#| Ximena comenté tus pruebas porque me marcaba un error
-(test (interp (parse '(foo))) (error "Identificador libre."))
-(test (interp(parse '(baz))) (error "Identificador libre."))
-(test (interp(parse (666))) (666))
-(test (interp(parse (-666))) (666))
-(test (interp(parse '(/ 1 2))) (/ 1 2)))
-(test (interp(parse '(sqrt 2))) (sqrt 2))
-(test (interp((parse (1+2i))) (1+2i)))
 
-(test (interp(parse '(+ 1 2 3))) (6))
-(test (interp(parse '(- 666 666)) (0)))
-(test (interp(parse '(* 111 6))) (666))
+(test/exn (interp (parse 'foo)) "Función no implementada.")
+(test/exn (interp (parse 'baz)) "Función no implementada.")
+(test (interp(parse 666)) 666)
+(test (interp(parse -666)) -666)
+(test (interp(parse (/ 1 2))) (/ 1 2))
+(test (interp(parse (sqrt 2))) (sqrt 2))
+(test (interp(parse 1+2i)) 1+2i)
+(test (interp(parse '(+ 1 2 3))) 6)
+(test (interp(parse '(- 666 666))) 0)
+(test (interp(parse '(* 111 6))) 666)
 (test (interp(parse '(/ 1 2 2 2))) (/ 1 8))   
-(test (interp(parse '(modulo 666 2))) (0))   
-(test (interp(parse '(min 666 2 666 0))) (0))
-(test (interp(parse '(max 666 2 666 0))) (666))  
-;;(op  (list (num 1) (num 2) (num 2) (num 2)))
-(test (interp(parse '(expt 2 2))) (op max (4)))  
-(test (interp(parse '(+ 666 (- 666 666)))) (666))  
+(test (interp(parse '(modulo 666 2))) 0)   
+(test (interp(parse '(min 666 2 666 0))) 0)
+(test (interp(parse '(max 666 2 666 0))) 666)  
+(test (interp(parse '(expt 2 2))) 4)  
+(test (interp(parse '(+ 666 (- 666 666)))) 666)  
 
-(test (interp(parse '{with {a 666} {+ 666 666}}))
-      (1332))
+(test (interp(parse '{with {a 666} {+ 666 666}})) 1332)
 
-(test (interp(parse '{with {a 666} {with {b 0} {+ a b}}})) (666))
+(test (interp(parse '{with {a 666} {with {b 0} {+ a b}}})) 666)
 
-(test (interp(parse '{with {a 666} {with {b a} {with {c 1} {+ a b c}}}}))
-      (1333))
+(test (interp(parse '{with {a 666} {with {b a} {with {c 1} {+ a b c}}}})) 1333)
 
-(test (interp(parse '{with* {{a 0} {b a}} {+ b b}}))
-      (0))
+(test (interp(parse '{with* {{a 0} {b a}} {+ b b}})) 0)
 
-(test (interp(parse '{with* {{a 0} {b 1}} {+ a b}}))
-       (1))
+(test (interp(parse '{with* {{a 0} {b 1}} {+ a b}})) 1)
 
-(test (interp(parse '{with* {{a 0} {b 1} {c 2}} {+ a b c}}))
-       (3))
-|#
+(test (interp(parse '{with* {{a 0} {b 1} {c 2}} {+ a b c}})) 3)
+
 
 ;; Pruebas para  subst (opcional)
 
