@@ -31,7 +31,7 @@
     [(? symbol?) (id sexp)]
     [(? number?) (num sexp)]
     [(list 'with (cons x xs) body)
-     (with (list (binding x (parse (car xs)))) (parse body))]
+     (with (foldr (λ (v l) (cons (binding (first v) (parse (second v))) l)) '() (cons x xs)) (parse body))]
     [(list 'with* (cons x xs) body)
      (with* (foldr (λ (v l) (cons (binding (first v) (parse (second v))) l)) '() (cons x xs)) (parse body))]
     [(cons x xs)
