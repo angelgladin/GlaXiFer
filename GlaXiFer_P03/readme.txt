@@ -1,6 +1,6 @@
 ╔════════════════════════════════════════════════════╗ 
 ║ Lenguajes de Programación                          ║ 
-║ Práctica 3                                         ║
+║ Práctica 3                                         ║
 ╚════════════════════════════════════════════════════╝
 
 ╔════════════════╗ 
@@ -53,6 +53,13 @@ Expresiones aceptadas por la gramática del lenguaje WAE.
    (with* (list (binding 'a (num 0)) (binding 'b (num 1))) (op + (list (id 'a) (id 'b))))
    (with* (list (binding 'a (num 0)) (binding 'b (num 1)) (binding 'c (num 2))) (op + (list (id 'a) (id 'b) (id 'c))))
 
+╔════════════════╗ 
+║ Ejercicio 3.1  ║ 
+╚════════════════╝
+El analizador léxico recibe una expresión y las separa en lexemas. En Racket podemos ahorrarnos este análisis al usar una de sus primitivas ¿cuál es esta primitiva?, ¿cómo funciona?, ¿por qué es útil para realizar el análisis léxico?
+
+La primitiva es Lexer. Lo que hace lexer es produce una función que toma un input-port, empareja los patrones “re” contra el búfer y devuelve el resultado de ejecutar la accion-expr correspondiente. Cuando varios patrones coinciden, un lexer elegirá el partido más largo, rompiendo los lazos en favor de la regla que aparece primero.
+Es útil para el análisis léxico ya que solo guardamos las palabras, como hacer un trim, y emparejamos (comparamos) que estén bien estructurados.
 .
 \`*-.                    
 )  _`-.                 
