@@ -25,6 +25,6 @@
     [(with* (cons x xs) bound-body)
          (with* (foldr (λ (v l) (cons (binding (binding-name v) (subst (binding-value v) sub-id val) ) l)) '() (cons x xs))
                (if(symbol=? (binding-name x) sub-id)
-                     bound-body
+                     bound-body 
                      (subst bound-body sub-id val)))]
     ))
