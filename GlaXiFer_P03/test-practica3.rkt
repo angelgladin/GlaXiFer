@@ -93,5 +93,24 @@
 
 ;; Pruebas para  subst (opcional)
 
+(test (subst (num 3) 'b (num 2))
+      (num 3))
+
 (test (subst (op + (list (id 'a) (num 3))) 'a (num 4))
       (op + (list (num 4) (num 3))))
+
+(test (subst (id 'b) 'b (num 2))
+      (num 2))
+
+(test (subst (id 'a) 'b (num 2))
+      (id 'a))
+
+(test (subst (with (list (binding 'a (num 2)) (binding 'b (num 3)))
+              (op / (list (id 'a) (id 'b) (id 'd)))) 'd (num 88))
+      (with (list (binding 'a (num 2)) (binding 'b (num 3)))
+              (op / (list (id 'a) (id 'b) (num 88)))))
+
+(test (subst (with* (list (binding 'a (num 0)) (binding 'b (num 1)))
+              (op + (list (id 'a) (id 'b) (id 'c)))) 'c (num 2))
+      (with* (list (binding 'a (num 0)) (binding 'b (num 1)))
+              (op + (list (id 'a) (id 'b) (num 2)))))

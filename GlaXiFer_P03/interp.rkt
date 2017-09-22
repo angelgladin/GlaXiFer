@@ -13,14 +13,18 @@
 (define (subst expr sub-id val)
   (match expr
     [(num n) expr]
-    [(op f (list l r)) (op f (list (subst l sub-id val)
-                                   (subst r sub-id val)))]
-    [(with (list bound-id named-expr) bound-body)
-         (if(symbol=? bound-id sub-id)
-            expr
-            (with bound-id
-                  named-expr
-                  (subst bound-body sub-id val)))]
-    [(id v) (if(symbol=? v sub-id)
-               val
-               expr)]))
+    [(id v) (if (symbol=? sub-id v)
+                val
+                expr)]
+    [(op f (cons x xs)) (op f (foldr (λ (v l) (cons (subst v sub-id val) l)) '() (cons x xs)))]
+    [(with (cons x xs) bound-body)
+         (with (foldr (λ (v l) (cons (binding (binding-name v) (subst (binding-value v) sub-id val) ) l)) '() (cons x xs))
+               (if(symbol=? (binding-name x) sub-id)
+                     bound-body
+                     (subst bound-body sub-id val)))]
+    [(with* (cons x xs) bound-body)
+         (with* (foldr (λ (v l) (cons (binding (binding-name v) (subst (binding-value v) sub-id val) ) l)) '() (cons x xs))
+               (if(symbol=? (binding-name x) sub-id)
+                     bound-body
+                     (subst bound-body sub-id val)))]
+    ))
