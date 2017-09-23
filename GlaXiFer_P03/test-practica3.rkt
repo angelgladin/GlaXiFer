@@ -59,8 +59,8 @@
               (op + (list (id 'a) (id 'b) (id 'c)))))
    
 ;; Pruebas para  interp
-(test/exn (interp (parse 'foo)) "Variable Libre.")
-(test/exn (interp (parse 'baz)) "Variable Libre.")
+(test/exn (interp (parse 'foo)) "Identificador libre")
+(test/exn (interp (parse 'baz)) "Identificador libre")
 (test (interp (parse 666)) 666)
 (test (interp (parse -666)) -666)
 (test (interp (parse (/ 1 2))) (/ 1 2))
@@ -70,23 +70,19 @@
 (test (interp (parse '(- 666 666))) 0)
 (test (interp (parse '(* 111 6))) 666)
 (test (interp (parse '(/ 1 2 2 2))) (/ 1 8))
-(test (interp (parse '(modulo 666 2))) 0)
+(test (interp (parse '(% 666 2))) 0)
 (test (interp (parse '(min 666 2 666 0))) 0)
 (test (interp (parse '(max 666 2 666 0))) 666)
-(test (interp (parse '(expt 2 2))) 4)
+(test (interp (parse '(pow 2 2 2))) 16)
 (test (interp (parse '(+ 666 (- 666 666)))) 666)
 
-(test (interp(parse '{with {a 666} {+ 666 666}})) 1332)
+(test (interp (parse '{with {{a 666}} {+ 666 666}})) 1332)
+(test (interp (parse '{with {{a 666}} {with {{b 0}} {+ a b}}})) 666)
+(test (interp (parse '{with {{a 666} {b 0} {c 1}} {+ a b c}})) 667)
 
-(test (interp(parse '{with {a 666} {with {b 0} {+ a b}}})) 666)
-
-(test (interp(parse '{with {a 666} {with {b a} {with {c 1} {+ a b c}}}})) 1333)
-
-(test (interp(parse '{with* {{a 0} {b a}} {+ b b}})) 0)
-
-(test (interp(parse '{with* {{a 0} {b 1}} {+ a b}})) 1)
-
-(test (interp(parse '{with* {{a 0} {b 1} {c 2}} {+ a b c}})) 3)
+(test (interp (parse '{with* {{a 0} {b a}} {+ b b}})) 0)
+(test (interp (parse '{with* {{a 0} {b 1}} {+ a b}})) 1)
+(test (interp (parse '{with* {{a 0} {b 1} {c 2}} {+ a b c}})) 3)
 
 
 ;; Pruebas para  subst (opcional)
