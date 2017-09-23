@@ -15,13 +15,17 @@
     [(with l bound-body)
          (interp (foldr (λ (l e) (subst bound-body (binding-name l) (num (interp (binding-value l) )))) '() l ))]
     [(with* l bound-body)
-         (interp (foldr (λ (l) (subst bound-body (binding-name l) (num (interp (list (binding-value l))))))
-                        '()
-                        (interp l)))]
-    [(cons x xs) (list (subst xs (binding-name x) (binding-value x)) (interp (cons (car xs) (cdr xs))))]
-     ))
+         (interp (with (interp l) bound-body))]
 
-;(interp (with* (list (binding 'a (num 0)) (binding 'b (num 1))) (op + (list (id 'a) (id 'b)))))
+    [(cons x xs) (cond
+                   [(empty? xs) (cons x xs)]
+                   [(empty? (cdr xs))
+                         (cons (binding (binding-name (car xs)) (subst (binding-value (car xs)) (binding-name x) (binding-value x))) empty)]
+                   [(cons x (interp (cdr (cons x (map (λ (v) (binding (binding-name v) (subst (binding-value v) (binding-name x) (binding-value x)))) xs)))))]
+                 )]
+
+    ))
+
 
 ;; Función que implementa el algoritmo de sustitución.
 ;; subst: WAE symbol WAE -> WAE
