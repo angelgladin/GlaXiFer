@@ -10,8 +10,9 @@
     [(num n) n]
     [(id v) (error 'interp "Identificador libre")]
     [(op f (cons x xs)) (if (empty? (cdr xs))
-                               (f (interp x) (interp (car xs)))
-                               (f (interp x) (interp (op f xs))))]
+                            (f (interp x) (interp (car xs)))
+                            (let ([r  (f (interp x) (interp (car xs)))])
+                                             (interp (op f (cons (num r) (cdr xs)) ))))]
     [(with l bound-body)
          (interp (foldr (λ (l e) (subst bound-body (binding-name l) (num (interp (binding-value l) )))) '() l ))]
     [(with* l bound-body)
