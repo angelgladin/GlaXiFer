@@ -8,7 +8,7 @@
 ╚════════════════╝
 Ángel Iván Gladín García
   313040131
-  angelgladin@gmail.com
+  angelgladin@ciencias.unam.mx
 María Ximena Lezama Hernández
   313040131
   lezama@ciencias.unam.mx
@@ -54,7 +54,7 @@ Expresiones aceptadas por la gramática del lenguaje WAE.
    (with* (list (binding 'a (num 0)) (binding 'b (num 1)) (binding 'c (num 2))) (op + (list (id 'a) (id 'b) (id 'c))))
 
 ╔════════════════╗ 
-║ Ejercicio 3.1  ║ 
+║ Ejercicio 3.2  ║ 
 ╚════════════════╝
 El analizador léxico recibe una expresión y las separa en lexemas. En Racket podemos ahorrarnos este análisis al usar una 
 de sus primitivas ¿cuál es esta primitiva?, ¿cómo funciona?, ¿por qué es útil para realizar el análisis léxico?
