@@ -44,4 +44,14 @@
 ;; expresiones de FBAE.
 ;; desugar: FWBAE -> FBAE
 (define (desugar expr)
-   (error 'desugar "Función no implementada."))
+   (type-case FWBAE expr
+     [idS (i) (id i)]
+     [numS (n) (num n)]
+     [boolS (b) (bool b)]
+     [appS (fun-expr args) (app (fun-expr) (map desugar args))]
+     [funS (f body) (fun f (desugar body))]
+     [opS (x args) (op x (map desugar args))]
+     [withS (f body) (app (fun (map (λ (v) (binding-name v)) f) (desugar body)) (map desugar (map(λ (v)(binding-value v)) f)))]
+     [withS* (f body) (cond
+                        [(= 1 (length f)) (desugar(withS f body))]
+                        [else (desugar(withS (list (car f)) (withS* (cdr f) body)))])]))
