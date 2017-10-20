@@ -64,7 +64,23 @@
 
 ;; Pruebas para  desugar
 
-#| ... Aquí van las pruebas (Borrar este comentario) ... |#
+(test (desugar (parse -666)) (num -666))
+(test (desugar (parse '(with ((a 666))
+                    (+ 666 666))))
+      (app (fun '(a) (op + (list (num 666) (num 666)))) (list (num 666))))
+(test (desugar (parse '(with* ((a 0) (b a))
+                     (+ b b))))
+      (app (fun '(a) (app (fun '(b) (op + (list (id 'b) (id 'b)))) (list (id 'a)))) (list (num 0))))
+
+(test (desugar (parse '(with* ((a 0) (b 1))
+                     (+ a b))))
+      (app (fun '(a) (app (fun '(b) (op + (list (id 'a) (id 'b)))) (list (num 1)))) (list (num 0))))
+
+(test (desugar(parse '(with ((a 666) (b 0) (c 1))
+                    (+ a b c))))
+      (app (fun '(a b c) (op + (list (id 'a) (id 'b) (id 'c)))) (list (num 666) (num 0) (num 1))))
+
+
 
 ;; Pruebas para  interp
 
