@@ -11,11 +11,15 @@
 ;; Pruebas para  parse
 
 (test (parse 'foo) (idS 'foo))
+(test (parse 'baz) (idS 'baz))
 
 (test (parse -666) (numS -666))
 (test (parse (/ 1 2)) (numS (/ 1 2)))
 (test (parse (sqrt 2)) (numS (sqrt 2)))
 (test (parse 1+2i) (numS 1+2i))
+
+(test (parse 'false) (boolS #f))
+(test (parse 'true) (boolS #t))
 
 (test (parse '(+ 1 2 3)) (opS + (list (numS 1) (numS 2) (numS 3))))
 (test (parse '(- 666 666)) (opS - (list (numS 666) (numS 666))))
@@ -55,12 +59,19 @@
        (withS* (list (binding 'a (numS 0)) (binding 'b (numS 1)) (binding 'c (numS 2)))
               (opS + (list (idS 'a) (idS 'b) (idS 'c)))))
 
-(test (parse '{fun {x} {+ x 2}}) (funS '(x) (opS + (list (idS 'x) (numS 2)))))
+(test (parse '{fun {x} {+ x 2}})
+      (funS '(x) (opS + (list (idS 'x) (numS 2)))))
 (test (parse '(fun {z} (with ((a 666) (b 0) (c 1)) (+ a b c))))
       (funS '(z) (withS (list (binding 'a (numS 666)) (binding 'b (numS 0)) (binding 'c (numS 1)))
             (opS + (list (idS 'a) (idS 'b) (idS 'c))))))
 
-(test (parse '(app (fun {a} (+ a 4)))) (appS (funS '{a} (opS + (idS 'a) (numS 4)) (list (numS 3)))))
+(test (parse '{app a {-666 foo}})
+      (appS (idS 'a) (list (numS -666) (idS 'foo))))
+(test (parse '(app {fun {a} {+ a 4}} {-666 baz {+ 1 2}}))
+      (appS (funS '(a) (opS + (list (idS 'a) (numS 4))) (list (numS -666) (idS 'baz) (opS + (list (numS 1) (numS 2)))))))
+(test (parse '{app false {{with {{a 666}} {+ a 0}} true}})
+      (appS (boolS #f) (list (withS (list (binding 'a (numS 666))) (opS + (list (idS 'a) (numS 0))))
+                             (boolS #t))))
 
 ;; Pruebas para  desugar
 
