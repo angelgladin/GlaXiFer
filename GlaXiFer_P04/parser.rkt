@@ -15,7 +15,25 @@
     ['% modulo]
     ['min min]
     ['max max]
-    ['pow mexpt]))
+    ['pow mexpt]
+    ['not not]
+    ['and and-aux]
+    ['or or-aux]
+    ['< <]
+    ['> >]
+    ['<= <=]
+    ['>= >=]
+    ['= =]
+    ['/= not-eq]))
+
+(define (or-aux . bools)
+  (ormap (λ (x) x) bools))
+
+(define (and-aux . bools)
+  (andmap (λ (x) x) bools))
+
+(define (not-eq . params)
+  (if (= (set-count (list->set params)) 1) #t #f))
 
 ;; Potencia multiparamétrica.
 ;; Función que recibe n elementos, a diferencia expt que solo recibe 2 elementos.
@@ -27,6 +45,8 @@
 ;; parse: s-expression -> FWBAE
 (define (parse sexp)
    (match sexp
+     ['true (boolS #t)]
+     ['false (boolS #f)]
      [(? symbol?) (idS sexp)]
      [(? number?) (numS sexp)]
      [(list 'with (cons x xs) body)
@@ -36,7 +56,7 @@
      [(list 'fun (cons x xs) body)
       (funS (cons x xs) (parse body))]
      [(list 'app fun-expr args)
-      (appS (parse fun-expr) (parse args))]
+      (appS (parse fun-expr) (foldr (λ (v l) (cons (parse v) l)) '()args))]
      [(cons x xs)
       (opS (elige x) (foldr (λ (v l) (cons (parse v) l)) '() xs))]))
 
