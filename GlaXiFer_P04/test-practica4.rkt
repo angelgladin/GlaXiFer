@@ -68,7 +68,7 @@
 (test (parse '{app a {-666 foo}})
       (appS (idS 'a) (list (numS -666) (idS 'foo))))
 (test (parse '(app {fun {a} {+ a 4}} {-666 baz {+ 1 2}}))
-      (appS (funS '(a) (opS + (list (idS 'a) (numS 4))) (list (numS -666) (idS 'baz) (opS + (list (numS 1) (numS 2)))))))
+      (appS (funS '(a) (opS + (list (idS 'a) (numS 4)))) (list (numS -666) (idS 'baz) (opS + (list (numS 1) (numS 2))))))
 (test (parse '{app false {{with {{a 666}} {+ a 0}} true}})
       (appS (boolS #f) (list (withS (list (binding 'a (numS 666))) (opS + (list (idS 'a) (numS 0))))
                              (boolS #t))))
