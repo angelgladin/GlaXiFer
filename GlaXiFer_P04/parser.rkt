@@ -53,8 +53,8 @@
 (define (parse sexp)
   (match sexp
     [(? symbol?) (case sexp
-                   ['true #t]
-                   ['false #f]
+                   ['true (boolS #t)]
+                   ['false (boolS #f)]
                    [else (idS sexp)])]
     [(? number?) (numS sexp)]
     [(list 'with (cons x xs) body)

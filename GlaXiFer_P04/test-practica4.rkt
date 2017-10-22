@@ -74,7 +74,6 @@
                              (boolS #t))))
 
 ;; Pruebas para  desugar
-
 (test (desugar (parse -666)) (num -666))
 (test (desugar (parse '{with {{a 666}}
                              {+ 666 666}}))
@@ -91,7 +90,13 @@
       (app (fun '(a b c) (op + (list (id 'a) (id 'b) (id 'c)))) (list (num 666) (num 0) (num 1))))
 
 
-
 ;; Pruebas para  interp
-
-#| ... Aquí van las pruebas (Borrar este comentario) ... |#
+(test/exn (interp (desugar (parse 'foo)) (mtSub)) "Free identifier")
+(test (interp (desugar (parse '1729)) (mtSub)) (numV 1729))
+(test (interp (desugar (parse 'true)) (mtSub)) (boolV #t))
+(test (interp (desugar (parse '{/= 1 2 3 4 5})) (mtSub)) (boolV #t))
+(test (interp (desugar (parse '{with {{a 2} {b 3}} {+ a b}})) (mtSub)) (numV 5))
+(test (interp (desugar (parse '{with* {{a 2} {b {+ a a}}} b})) (mtSub)) (numV 4))
+(test (interp (desugar (parse '{fun {x} {+ x 2}})) (mtSub)) (closureV '(x) (op + (list (id 'x) (num 2)) (mtSub))))
+(test (interp (desugar (parse '{{fun '{a b} {+ a b}} 2 3})) (mtSub)) (numV 5))
+(test (interp (desugar (parse '{or {not true} false})) (mtSub)) (boolV #f))
