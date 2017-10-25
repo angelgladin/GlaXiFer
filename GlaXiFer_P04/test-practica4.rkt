@@ -97,6 +97,6 @@
 (test (interp (desugar (parse '{/= 1 2 3 4 5})) (mtSub)) (boolV #t))
 (test (interp (desugar (parse '{with {{a 2} {b 3}} {+ a b}})) (mtSub)) (numV 5))
 (test (interp (desugar (parse '{with* {{a 2} {b {+ a a}}} b})) (mtSub)) (numV 4))
-(test (interp (desugar (parse '{fun {x} {+ x 2}})) (mtSub)) (closureV '(x) (op + (list (id 'x) (num 2)) (mtSub))))
-(test (interp (desugar (parse '{{fun '{a b} {+ a b}} 2 3})) (mtSub)) (numV 5))
+(test (interp (desugar (parse '{fun {x} {+ x 2}})) (mtSub)) (closureV '(x) (op + (list (id 'x) (num 2))) (mtSub)))
+(test (interp (desugar (parse '{app {fun {a b} {+ a b}} {2 3}})) (mtSub)) (numV 5))
 (test (interp (desugar (parse '{or {not true} false})) (mtSub)) (boolV #f))

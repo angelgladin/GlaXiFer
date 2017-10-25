@@ -38,9 +38,9 @@
   (andmap (λ (x) x) bools))
 
 ;; [ Auxiliar ]. Función que hace que hace un `/=` que recibe n argumentos
-;; se hizo porque la función `/=` es un macro y un una función.
+;; se hizo porque la función `/=` es un macro y no una función.
 (define (not-eq . params)
-  (if (= (set-count (list->set params)) 1) #t #f))
+  (not (apply = params)))
 
 ;; Potencia multiparamétrica.
 ;; Función que recibe n elementos, a diferencia expt que solo recibe 2 elementos.
@@ -64,7 +64,7 @@
     [(list 'fun (cons x xs) body)
      (funS (cons x xs) (parse body))]
     [(list 'app fun-expr args)
-     (appS (parse fun-expr) (foldr (λ (v l) (cons (parse v) l)) '()args))]
+     (appS (parse fun-expr) (foldr (λ (v l) (cons (parse v) l)) '() args))]
     [(cons x xs)
      (opS (elige x) (foldr (λ (v l) (cons (parse v) l)) '() xs))]))
 
@@ -77,7 +77,7 @@
     [idS (i) (id i)]
     [numS (n) (num n)]
     [boolS (b) (bool b)]
-    [appS (fun-expr args) (app (fun-expr) (map desugar args))]
+    [appS (fun-expr args) (app (desugar fun-expr) (foldr (λ (v l) (cons (desugar v) l)) '() args))]
     [funS (f body) (fun f (desugar body))]
     [opS (x args) (op x (map desugar args))]
     [withS (f body) (app (fun (map (λ (v) (binding-name v)) f) (desugar body)) (map desugar (map (λ (v) (binding-value v)) f)))]
