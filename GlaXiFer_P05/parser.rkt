@@ -56,7 +56,6 @@
                    ['false (boolS #f)]
                    [else (idS sexp)])]
     [(? number?) (numS sexp)]
-    [(? boolean?) (boolS sexp)]
     [(list 'with (cons x xs) body)
      (withS (foldr (λ (v l) (cons (binding (first v) (parse (second v))) l)) '() (cons x xs)) (parse body))]
     [(list 'with* (cons x xs) body)
