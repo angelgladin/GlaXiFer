@@ -51,23 +51,37 @@
 ;; parse: s-expression -> CFWBAE/L
 (define (parse sexp)
   (match sexp
-    [(? symbol?) (case sexp
-                   ['true (boolS #t)]
-                   ['false (boolS #f)]
-                   [else (idS sexp)])]
-    [(? number?) (numS sexp)]
-    [(list 'with (cons x xs) body)
-     (withS (foldr (λ (v l) (cons (binding (first v) (parse (second v))) l)) '() (cons x xs)) (parse body))]
-    [(list 'with* (cons x xs) body)
-     (withS* (foldr (λ (v l) (cons (binding (first v) (parse (second v))) l)) '() (cons x xs)) (parse body))]
-    [(list 'fun (cons x xs) body)
+    [(? symbol?) (case sexp ; Símbolo
+                   ['true (boolS #t)] ; Booleano verdadero
+                   ['false (boolS #f)] ; Booleano false
+                   [else (idS sexp)])] ; Identificador
+    [(? number?) (numS sexp)] ; Número
+    [(list 'with bindings body) ; With
+     (withS (aux-parse-bindings bindings) (parse body))]
+    [(list 'with* bindings body) ; With*
+     (withS* (aux-parse-bindings bindings) (parse body))]
+    [(list 'fun (cons x xs) body) ; Función
      (funS (cons x xs) (parse body))]
-    [(list 'app fun-expr args)
-     (appS (parse fun-expr) (foldr (λ (v l) (cons (parse v) l)) '() args))]
-    [(list 'if cond-expr then-expr else-expr)
+    [(cons (list 'fun fun-params fun-body) params) ; Aplicación de función
+     (appS (funS (cadr fun-params) (parse fun-body)) (aux-parse-params params))]
+    [(list 'if cond-expr then-expr else-expr) ; If
      (ifS (parse cond-expr) (parse then-expr) (parse else-expr))]
-    [(cons x xs)
-     (opS (elige x) (foldr (λ (v l) (cons (parse v) l)) '() xs))]))
+    [(cons 'cond conditions)
+     (condS (aux-parse-conds conditions))]
+    [(cons x params) ; Operación
+     (opS (elige x) (aux-parse-params params))]))
+
+(define (aux-parse-params params)
+  (foldr (λ (v l) (cons (parse v) l)) '() params))
+
+(define (aux-parse-bindings bindings)
+  (foldr (λ (v l) (cons (binding (first v) (parse (second v))) l)) '() bindings))
+
+(define (aux-parse-conds conditions)
+  (let ([conditions-map (λ (c) (match c
+                                 [(list 'else else-expr) (else-cond (parse else-expr))]
+                                 [(list expr then-expr) (condition (parse expr) (parse then-expr))]))])
+    (foldr (λ (v l) (cons (conditions-map v) l)) '() conditions)))
 
 ;; Función que elimina el azúcar sintáctica de las expresiones de CFWBAE/L, es decir las convierte a 
 ;; expresiones de CFBAE/L.
