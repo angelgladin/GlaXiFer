@@ -78,14 +78,14 @@
 (test (parse '{if {= x true} (+ 9 10) 8}) (ifS (opS = (list (idS 'x) (boolS #t))) (opS + (list (numS 9) (numS 10))) (numS 8)))
 (test (parse '{if {= x 7}
                   {with* {{a 0} {b 1}}
-                     {+ a b}}
+                         {+ a b}}
                   {with* {{a 0} {b 1} {c 2}}
-                     {+ a b c}}})
+                         {+ a b c}}})
       (ifS (opS = (list (idS 'x) (numS 7)))
            (withS* (list (binding 'a (numS 0)) (binding 'b (numS 1)))
-              (opS + (list (idS 'a) (idS 'b))))
+                   (opS + (list (idS 'a) (idS 'b))))
            (withS* (list (binding 'a (numS 0)) (binding 'b (numS 1)) (binding 'c (numS 2)))
-              (opS + (list (idS 'a) (idS 'b) (idS 'c))))))
+                   (opS + (list (idS 'a) (idS 'b) (idS 'c))))))
 
 (test (parse '{cond {{< 2 3} 1} {{> 10 2} 2} {else 3}})
       (condS
@@ -93,3 +93,25 @@
         (condition (opS < (list (numS 2) (numS 3))) (numS 1))
         (condition (opS > (list (numS 10) (numS 2))) (numS 2))
         (else-cond (numS 3)))))
+
+
+;; Pruebas para  desugar
+(test (desugar (parse '{with {{a 3}}
+                             {+ a 4}}))
+      (app (fun '(a) (op + (list (id 'a) (num 4)))) (list (num 3))))
+(test (desugar (parse '{with {{a 666} {b 0} {c 1}}
+                             {+ a b c}}))
+      (app (fun '(a b c) (op + (list (id 'a) (id 'b) (id 'c)))) (list (num 666) (num 0) (num 1))))
+(test (desugar (parse '{with* {{a 2} {b {+ a a}}}
+                              b}))
+      (app (fun '(a) (app (fun '(b) (id 'b)) (list (op + (list (id 'a) (id 'a)))))) (list (num 2))))
+(test (desugar (parse '{with* {{a 0} {b 1}}
+                              {+ a b}}))
+      (app (fun '(a) (app (fun '(b) (op + (list (id 'a) (id 'b)))) (list (num 1)))) (list (num 0))))
+(test (desugar (parse '{cond {{< 2 3} 1} {{> 10 2} 2} {else 3}}))
+      (iF (op < (list (num 2) (num 3))
+              (num 1)
+              (iF (op > (list (num 10) (num 2)))
+                  (num 2)
+                  (num 3)))))
+
