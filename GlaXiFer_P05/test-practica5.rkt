@@ -114,3 +114,21 @@
           (iF (op > (list (num 10) (num 2)))
               (num 2)
               (num 3))))
+
+;; Pruebas para  interp
+(test/exn (interp (desugar (parse 'foo)) (mtSub)) "Free identifier")
+(test (interp (desugar (parse '1729)) (mtSub)) (numV 1729))
+(test (interp (desugar (parse 'true)) (mtSub)) (boolV #t))
+(test (interp (desugar (parse '{/= 1 2 3 4 5})) (mtSub)) (boolV #t))
+(test (interp (desugar (parse '{if true true false})) (mtSub)) (boolV #t))
+(test (interp (desugar (parse '{if {/= 2 2} true false})) (mtSub)) (boolV #f))
+(test (interp (desugar (parse '{cond {true 1} {true 2} {else 3}})) (mtSub)) (numV 1))
+(test (interp (desugar (parse '{with {{a 2} {b 3}} {+ a b}})) (mtSub)) (numV 5))
+(test (interp (desugar (parse '{with {{a 666} {b {/ 1 0}}} {+ a 0}})) (mtSub)) (numV 666))
+(test (interp (desugar (parse '{with* {{a 2} {b {+ a a}}} b})) (mtSub))
+      (exprV
+       (op + (list (id 'a) (id 'a)))
+       (aSub 'a (exprV (num 2) (mtSub)) (mtSub))))
+(test (interp (desugar (parse '{fun {x} {+ x 2}})) (mtSub)) (closureV '(x) (op + (list (id 'x) (num 2))) (mtSub)))
+(test (interp (desugar (parse '{{fun {a b} {+ a b}} {2 3}})) (mtSub)) (numV 5))
+(test (interp (desugar (parse '{or {not true} false})) (mtSub)) (boolV #f))
