@@ -62,8 +62,8 @@
      (withS* (aux-parse-bindings bindings) (parse body))]
     [(list 'fun (cons x xs) body) ; Función
      (funS (cons x xs) (parse body))]
-    [(cons (list 'fun fun-params fun-body) params) ; Aplicación de función
-     (appS (funS (cadr fun-params) (parse fun-body)) (aux-parse-params params))]
+    [(list (list 'fun fun-params fun-body) params) ; Aplicación de función
+     (appS (funS fun-params (parse fun-body)) (aux-parse-params params))]
     [(list 'if cond-expr then-expr else-expr) ; If
      (ifS (parse cond-expr) (parse then-expr) (parse else-expr))]
     [(cons 'cond conditions) ; Cond
@@ -124,4 +124,4 @@
 ;; es usada en la aplicación de función porque da el valor de cada parámetro asociado.
 ;; aux-parse-params: list Binding -> list CFBAE/L?
 (define (with-values bindings)
-  (desugar-params (foldr (λ (v l) (cons (desugar (binding-value v)) l)) '() bindings)))
+  (foldr (λ (v l) (cons (desugar (binding-value v)) l)) '() bindings))
