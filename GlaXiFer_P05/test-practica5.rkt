@@ -125,6 +125,10 @@
 (test (interp (desugar (parse '{cond {true 1} {true 2} {else 3}})) (mtSub)) (numV 1))
 (test (interp (desugar (parse '{with {{a 2} {b 3}} {+ a b}})) (mtSub)) (numV 5))
 (test (interp (desugar (parse '{with {{a 666} {b {/ 1 0}}} {+ a 0}})) (mtSub)) (numV 666))
+(test (interp (desugar (parse '{with {{a {+ 1 1}}} a})) (mtSub))
+      (exprV
+       (op + (list (num 1) (num 1)))
+       (aSub 'a (exprV (op + (list (num 1) (num 1))) (mtSub)) (mtSub))))
 (test (interp (desugar (parse '{with* {{a 2} {b {+ a a}}} b})) (mtSub))
       (exprV
        (op + (list (id 'a) (id 'a)))
