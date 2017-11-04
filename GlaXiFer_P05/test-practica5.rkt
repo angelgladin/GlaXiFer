@@ -126,12 +126,9 @@
 (test (interp (desugar (parse '{with {{a 2} {b 3}} {+ a b}})) (mtSub)) (numV 5))
 (test (interp (desugar (parse '{with {{a 666} {b {/ 1 0}}} {+ a 0}})) (mtSub)) (numV 666))
 (test (interp (desugar (parse '{with {{a {+ 1 1}}} a})) (mtSub))
-      (exprV
-       (op + (list (num 1) (num 1)))
-       (aSub 'a (exprV (op + (list (num 1) (num 1))) (mtSub)) (mtSub))))
+      (exprV (op + (list (num 1) (num 1))) (mtSub)))
 (test (interp (desugar (parse '{with* {{a 2} {b {+ a a}}} b})) (mtSub))
-      (exprV
-       (op + (list (id 'a) (id 'a)))
+      (exprV (op + (list (id 'a) (id 'a)))
        (aSub 'a (exprV (num 2) (mtSub)) (mtSub))))
 (test (interp (desugar (parse '{fun {x} {+ x 2}})) (mtSub)) (closureV '(x) (op + (list (id 'x) (num 2))) (mtSub)))
 (test (interp (desugar (parse '{{fun {a b} {+ a b}} {2 3}})) (mtSub)) (numV 5))
