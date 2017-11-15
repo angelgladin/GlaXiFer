@@ -41,11 +41,12 @@
 
 ;; Función auxiliar que dada un operación y una lista de argumentos,
 ;; aplica dicha aperación a los argumentos
+;; opf: procedure -> list -> CFBAE/L-Value
 (define (opf f l)
   (let ([result (apply f (map (λ (v) (match v
-                                       [(? numV?) (numV-n (strict v))]
-                                       [(? boolV?) (boolV-b (strict v))])) l))])
-    (if (list-contain? (list + - * / modulo min max mexpt) f)
+                                       [(? numV?) (numV-n v)]
+                                       [(? boolV?) (boolV-b v)])) l))])
+    (if (list-contain? (list + - * / mmodulo min max mexpt) f)
         (numV result)
         (boolV result))))
 

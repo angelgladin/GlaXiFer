@@ -84,8 +84,10 @@
      (ifS (parse cond-expr) (parse then-expr) (parse else-expr))]
     [(cons 'cond conditions) ; Cond
      (condS (aux-parse-conds conditions))]
-    [(cons x params) ; Operación
-     (opS (elige x) (map parse params))]))
+    [(cons x xs) ; Operación
+     (case x ; Checamos si es una operación del lenguaje o aplicación de función
+       [(+ - * / % min max pow not and or < > <=  >= = /=) (opS (elige x) (map parse xs))]
+       [else (appS (parse x) (map parse xs))])]))
 
 ;; Función auxiliar que hace un crea una lista de `bindings`.
 ;; aux-parse-bindings list list symbol -> list Binding
