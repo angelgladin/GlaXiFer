@@ -12,7 +12,7 @@
     ['- -]
     ['* *]
     ['/ /]
-    ['% modulo]
+    ['% mmodulo]
     ['min min]
     ['max max]
     ['pow mexpt]
@@ -42,9 +42,25 @@
   (not (apply = params)))
 
 ;; Potencia multiparamétrica.
-;; Función que recibe n elementos, a diferencia expt que solo recibe 2 elementos.
-(define mexpt
-  (λ nums (foldr expt (car nums) (cdr nums))))
+;; Función que recibe n elementos, a diferencia `expt` que solo recibe 2 elementos.
+(define (mexpt . params)
+  (opMultiparametrica expt params))
+
+;; Módulo multiparamétrico.
+;; Función que recibe n elementos, a diferencia de `modulo` que solo recibe 2 elementos.
+(define (mmodulo . params)
+  (opMultiparametrica modulo params))
+
+;; Función auxiliar que dada una función que solo recibe dos parámetros la convierte
+;; en una función asociativa que recibe n parámetros y siempre va asociando
+;; el resultado con el siguiente elemento.
+;; opMultiparametrica: procedure -> list number -> number
+(define (opMultiparametrica f params)
+  (letrec ([aux (λ (n l)
+                  (match l
+                    ['() n]
+                    [(cons x xs) (aux (f n x) xs)]))])
+    (aux (f (first params) (second params)) (cdr (cdr params)))))
 
 ;; Analizador sintáctico para CFWBAE/L.
 ;; Dada una s-expression, construye el árbol de sintaxis abstracta correspondiente.
