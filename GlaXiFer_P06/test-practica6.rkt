@@ -6,11 +6,19 @@
 
 (print-only-errors)
 
-#| Módulo para pruebas unitarias de la práctica 5 |#
+#| Módulo para pruebas unitarias de la práctica 6 |#
 
-;; Pruebas para  parse
+;; Expresión recursiva
+(define expr-rec
+  '{rec {
+         {fac {fun {n}
+                   {if {zero? n}
+                       1
+                       {* n {fac {- n 1}}}}}}
+         {n 5}}
+     {fac n}})
 
-
+;; Pruebas para parse
 (test (parse 'foo) (idS 'foo))
 (test (parse 'baz) (idS 'baz))
 
@@ -22,6 +30,9 @@
 (test (parse 'false) (boolS #f))
 (test (parse 'true) (boolS #t))
 
+(test (parse '{list 1 2 3}) (listS (list (numS 1) (numS 2) (numS 3))))
+(test (parse '{list}) (listS '()))
+
 (test (parse '{+ 1 2 3}) (opS + (list (numS 1) (numS 2) (numS 3))))
 (test (parse '{- 666 666}) (opS - (list (numS 666) (numS 666))))
 (test (parse '{* 111 6}) (opS * (list (numS 111) (numS 6))))
@@ -31,39 +42,51 @@
 (test (parse '{max 666 666 666 0}) (opS max (list (numS 666) (numS 666) (numS 666) (numS 0))))
 (test (parse '{* 1 2 2 2}) (opS * (list (numS 1) (numS 2) (numS 2) (numS 2))))
 (test (parse '{+ 666 {- 666 666}}) (opS + (list (numS 666) (opS - (list (numS 666) (numS 666))))))
+(test (parse '{empty? {list 666}}) (opS empty? (list (listS (list (numS 666))))))
+(test (parse '{head {list 666}}) (opS car (list (listS (list (numS 666))))))
 
-(test (parse '{with {{a 666}}
-                    {+ 666 666}})
-      (withS (list (binding 'a (numS 666)))
+(test (parse '{with {{a 666}} {+ 666 666}})
+      (withS (list (bindingS 'a (numS 666)))
              (opS + (list (numS 666) (numS 666)))))
 (test (parse '{with {{a 666}}
                     {with {{b 0}}
                           {+ a b}}})
-      (withS (list (binding 'a (numS 666)))
-             (withS (list (binding 'b (numS 0)))
+      (withS (list (bindingS 'a (numS 666)))
+             (withS (list (bindingS 'b (numS 0)))
                     (opS + (list (idS 'a) (idS 'b))))))
 (test (parse '{with {{a 666} {b 0} {c 1}}
                     {+ a b c}})
-      (withS (list (binding 'a (numS 666)) (binding 'b (numS 0)) (binding 'c (numS 1)))
+      (withS (list (bindingS 'a (numS 666)) (bindingS 'b (numS 0)) (bindingS 'c (numS 1)))
              (opS + (list (idS 'a) (idS 'b) (idS 'c)))))
 
 (test (parse '{with* {{a 0} {b a}}
                      {+ b b}})
-      (withS* (list (binding 'a (numS 0)) (binding 'b (idS 'a)))
+      (withS* (list (bindingS 'a (numS 0)) (bindingS 'b (idS 'a)))
               (opS + (list (idS 'b) (idS 'b)))))
 (test (parse '{with* {{a 0} {b 1}}
                      {+ a b}})
-      (withS* (list (binding 'a (numS 0)) (binding 'b (numS 1)))
+      (withS* (list (bindingS 'a (numS 0)) (bindingS 'b (numS 1)))
               (opS + (list (idS 'a) (idS 'b)))))
 (test (parse '{with* {{a 0} {b 1} {c 2}}
                      {+ a b c}})
-      (withS* (list (binding 'a (numS 0)) (binding 'b (numS 1)) (binding 'c (numS 2)))
+      (withS* (list (bindingS 'a (numS 0)) (bindingS 'b (numS 1)) (bindingS 'c (numS 2)))
               (opS + (list (idS 'a) (idS 'b) (idS 'c)))))
+
+(test (parse expr-rec)
+      (recS
+       (list
+        (bindingS 'fac (funS '(n) (ifS
+                                   (opS zero? (list (idS 'n)))
+                                   (numS 1)
+                                   (opS * (list (idS 'n)
+                                                (appS (idS 'fac) (list (opS - (list (idS 'n) (numS 1))))))))))
+        (bindingS 'n (numS 5)))
+       (appS (idS 'fac) (list (idS 'n)))))
 
 (test (parse '{fun {x} {+ x 2}})
       (funS '(x) (opS + (list (idS 'x) (numS 2)))))
 (test (parse '{fun {z} {with {{a 666} {b 0} {c 1}} {+ a b c}}})
-      (funS '(z) (withS (list (binding 'a (numS 666)) (binding 'b (numS 0)) (binding 'c (numS 1)))
+      (funS '(z) (withS (list (bindingS 'a (numS 666)) (bindingS 'b (numS 0)) (bindingS 'c (numS 1)))
                         (opS + (list (idS 'a) (idS 'b) (idS 'c))))))
 
 (test (parse '{{fun {a b} {+ a b}} {2 3}})
@@ -73,8 +96,7 @@
 (test (parse '{{fun {a b c} {or a b c}} {false true false}})
       (appS (funS '(a b c) (opS or-aux (list (idS 'a) (idS 'b) (idS 'c)))) (list (boolS #f) (boolS #t) (boolS #f))))
 
-
-(test (parse '{if {< 2 3} 4 5}) (ifS (opS < (list (numS 2) (numS 3))) (numS 4) (numS 5)) )
+(test (parse '{if {< 2 3} 4 5}) (ifS (opS < (list (numS 2) (numS 3))) (numS 4) (numS 5)))
 (test (parse '{if {= x true} (+ 9 10) 8}) (ifS (opS = (list (idS 'x) (boolS #t))) (opS + (list (numS 9) (numS 10))) (numS 8)))
 (test (parse '{if {= x 7}
                   {with* {{a 0} {b 1}}
@@ -82,9 +104,9 @@
                   {with* {{a 0} {b 1} {c 2}}
                          {+ a b c}}})
       (ifS (opS = (list (idS 'x) (numS 7)))
-           (withS* (list (binding 'a (numS 0)) (binding 'b (numS 1)))
+           (withS* (list (bindingS 'a (numS 0)) (bindingS 'b (numS 1)))
                    (opS + (list (idS 'a) (idS 'b))))
-           (withS* (list (binding 'a (numS 0)) (binding 'b (numS 1)) (binding 'c (numS 2)))
+           (withS* (list (bindingS 'a (numS 0)) (bindingS 'b (numS 1)) (bindingS 'c (numS 2)))
                    (opS + (list (idS 'a) (idS 'b) (idS 'c))))))
 
 (test (parse '{cond {{< 2 3} 1} {{> 10 2} 2} {else 3}})
