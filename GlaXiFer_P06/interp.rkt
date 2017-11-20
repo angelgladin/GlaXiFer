@@ -13,7 +13,7 @@
           [(num n) (numV n)] ;Número
           [(bool b) (boolV b)] ;Booleanin
           [(lisT elems) (listV (map (λ (v) (strict (interp v env))) elems))] ; Lista
-          [(op f args) (opf f (map (λ (v) (strict (interp v env))) args))]
+          [(op f args) (opf f (map (λ (v) (strict (interp v env))) args))] ;op
           [(iF expr then-expr else-expr) (if (boolV-b (strict (interp expr env)))
                                        (interp then-expr env)
                                        (interp else-expr env))]
