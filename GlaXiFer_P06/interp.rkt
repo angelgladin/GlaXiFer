@@ -12,6 +12,7 @@
           [(id i) (lookup i env)] ;Simbolo
           [(num n) (numV n)] ;Número
           [(bool b) (boolV b)] ;Booleanin
+          [(list (listT (cons x xs))) (listV (map (λ (v) (interp v env)) (cons x xs)))]
           [(cons x xs) (listV (map (λ (v) (interp v env)) (cons x xs)))] ; Lista
           [(op f args) (opf f (map (λ (v) (strict (interp v env))) args))]
           [(iF expr then-expr else-expr) (if (boolV-b (strict (interp expr env)))
