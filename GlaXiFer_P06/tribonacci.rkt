@@ -15,14 +15,13 @@
   )
 (define (tribonacci-cola n acc1 acc2 acc3)
   (cond
-    [(= n 0) acc3]
-    [(= n 1) acc3]
+    [(= n 0) acc1]
+    [(= n 1) acc2]
     [(= n 2) acc3]
     [else (tribonacci-cola (- n 1) acc2 acc3 (+ acc1 acc2 acc3))]))
 
 
 ;; tribonacci-memo: number -> number
-
 (define tabla (make-hash (list (cons 0 0) (cons 1 0) (cons 2 1))))
 
 (define (tribonacci-memo n)
