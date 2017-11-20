@@ -12,8 +12,7 @@
           [(id i) (lookup i env)] ;Simbolo
           [(num n) (numV n)] ;Número
           [(bool b) (boolV b)] ;Booleanin
-          [(list (listT (cons x xs))) (listV (map (λ (v) (interp v env)) (cons x xs)))]
-          [(cons x xs) (listV (map (λ (v) (interp v env)) (cons x xs)))] ; Lista
+          [(lisT elems) (listV (map (λ (v) (strict (interp v env))) elems))] ; Lista
           [(op f args) (opf f (map (λ (v) (strict (interp v env))) args))]
           [(iF expr then-expr else-expr) (if (boolV-b (strict (interp expr env)))
                                        (interp then-expr env)
@@ -42,10 +41,13 @@
 (define (opf f l)
   (let ([result (apply f (map (λ (v) (match v
                                        [(? numV?) (numV-n v)]
-                                       [(? boolV?) (boolV-b v)])) l))])
+                                       [(? boolV?) (boolV-b v)]
+                                       [(? listV?) (listV-elems v)])) l))])
     (if (list-contain? (list + - * / mmodulo min max mexpt) f)
         (numV result)
-        (boolV result))))
+        (if (list-contain? (list car cdr) f)
+            result
+            (boolV result)))))
 
 ;; Función auxiliar que verifica si un elemento pertenece a una lista.
 ;; lista-contiene: list any -> boolean
