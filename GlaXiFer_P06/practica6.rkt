@@ -33,7 +33,7 @@
 (define (ejecuta)
    (let ([args (current-command-line-arguments)])
       (cond
-         [(zero? (vector-length args)) (CFWBAE/L)]
+         [(zero? (vector-length args)) (RCFWBAEL/L)]
          [(equal? (vector-ref args 0) "-i")
             (cond
                [(= (vector-length args) 2)

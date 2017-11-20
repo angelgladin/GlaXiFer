@@ -158,3 +158,6 @@
 (test (interp (desugar (parse '{with* {{a 2} {g {fun {x} {+ x a}}}} {g 3}})) (mtSub)) (numV 5))
 (test (interp (desugar (parse '{pow 2 2 2 2})) (mtSub)) (numV 256))
 (test (interp (desugar (parse '{% 5 10 20 2})) (mtSub)) (numV 1))
+(test (interp (desugar (parse expr-rec)) (mtSub)) (numV 120))
+(test (interp (desugar (parse '{empty? {list 666}})) (mtSub)) (boolV #f))
+(test (interp (desugar (parse '{zero? 0})) (mtSub)) (boolV #t))
