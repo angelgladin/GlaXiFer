@@ -124,11 +124,15 @@
     [(numS n) (num n)]
     [(boolS b) (bool b)]
     [(opS f args) (op f (map desugar args))]
+    [(listS elem) (desugar elem)]
     [(ifS expr then-expr else-expr) (iF (desugar expr) (desugar then-expr) (desugar else-expr))]
     [(condS (cons x xs)) (match x
                            [(condition expr then-expr) (desugar (ifS expr then-expr (condS xs)))]
                            [(else-cond else-expr)  (desugar else-expr)])]
-    [(withS bindings body) (app (fun (map bindingS-name bindings) (desugar body)) (map (λ (v) (desugar (bindingS-value v))) bindings))]
+    [(withS bindings body) (app (fun (map bindingS-name bindings) (desugar body))
+                                (map (λ (v) (desugar (bindingS-value v))) bindings))]
     [(withS* (cons x xs) body) (desugar (withS (list x) (if (empty? xs) body (withS* xs body))))]
     [(funS params body) (fun params (desugar body))]
+    [(recS bindings body) (app (fun (map bindingS-name bindings) (desugar body))
+                               (map (λ (v) (desugar (bindingS-value v))) bindings))]
     [(appS fun-expr args) (app (desugar fun-expr) (map desugar args))]))
