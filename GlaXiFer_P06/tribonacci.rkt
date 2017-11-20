@@ -22,4 +22,13 @@
 
 
 ;; tribonacci-memo: number -> number
-;;(define (tribonacci-memo n))
+
+(define tabla (make-hash (list (cons 0 0) (cons 1 0) (cons 2 1))))
+
+(define (tribonacci-memo n)
+  (let ([res (hash-ref tabla n 'ninguno) ]) 
+  (cond
+    [(equal? res 'ninguno)
+         (hash-set! tabla n (+ (tribonacci-memo(- n 1)) (tribonacci-memo(- n 2)) (tribonacci-memo(- n 3))))
+         (hash-ref tabla n)]
+    [else res])))
