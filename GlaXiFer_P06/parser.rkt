@@ -123,7 +123,7 @@
     [(idS i) (id i)]
     [(numS n) (num n)]
     [(boolS b) (bool b)]
-    [(listS elems) (map desugar elems)]
+    [(listS elems) (lisT (map desugar elems))]
     [(opS f args) (op f (map desugar args))]
     [(ifS expr then-expr else-expr) (iF (desugar expr) (desugar then-expr) (desugar else-expr))]
     [(condS (cons x xs)) (match x
