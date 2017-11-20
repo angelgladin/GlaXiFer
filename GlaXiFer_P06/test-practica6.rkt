@@ -118,24 +118,17 @@
 
 
 ;; Pruebas para  desugar
-(test (desugar (parse '{with {{a 3}}
-                             {+ a 4}}))
+(test (desugar (parse '{with* {{a 0} {b 1} {c 2}}{+ a b c}}))
+      (app (fun '(a) (app (fun '(b) (app (fun '(c) (op + (list (id 'a) (id 'b) (id 'c)))) (list (num 2)))) (list (num 1)))) (list (num 0))))
+(test (desugar (parse '{fun {x} {+ x 2}}))
+      (fun '(x) (op + (list (id 'x) (num 2)))))
+(test (desugar (parse '{with {{a 3}} {+ a 4}}))
       (app (fun '(a) (op + (list (id 'a) (num 4)))) (list (num 3))))
-(test (desugar (parse '{with {{a 666} {b 0} {c 1}}
-                             {+ a b c}}))
-      (app (fun '(a b c) (op + (list (id 'a) (id 'b) (id 'c)))) (list (num 666) (num 0) (num 1))))
-(test (desugar (parse '{with* {{a 2} {b {+ a a}}}
-                              b}))
+(test (desugar (parse '{with {{a 2}}{with {{b {+ a a}}}b}}))
       (app (fun '(a) (app (fun '(b) (id 'b)) (list (op + (list (id 'a) (id 'a)))))) (list (num 2))))
-(test (desugar (parse '{with* {{a 0} {b 1}}
-                              {+ a b}}))
-      (app (fun '(a) (app (fun '(b) (op + (list (id 'a) (id 'b)))) (list (num 1)))) (list (num 0))))
-(test (desugar (parse '{cond {{< 2 3} 1} {{> 10 2} 2} {else 3}}))
-      (iF (op < (list (num 2) (num 3)))
-          (num 1)
-          (iF (op > (list (num 10) (num 2)))
-              (num 2)
-              (num 3))))
+(test (desugar (parse '{cond{{< 2 3} 1}{{> 10 2} 2} {else 3}}))
+      (iF (op < (list (num 2) (num 3))) (num 1) (iF (op > (list (num 10) (num 2))) (num 2) (num 3))))
+
 
 ;; Pruebas para  interp
 (test/exn (interp (desugar (parse 'foo)) (mtSub)) "Free identifier")
