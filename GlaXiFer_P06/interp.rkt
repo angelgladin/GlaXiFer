@@ -8,22 +8,21 @@
 ;; identificadores.
 ;; interp: RCFBAEL/L Env -> RCFBAEL/L-Value
 (define (interp expr env)
-	(match expr
-          [(id i) (lookup i env)] ;Simbolo
-          [(num n) (numV n)] ;Número
-          [(bool b) (boolV b)] ;Booleanin
-          [(lisT elems) (listV (map (λ (v) (strict (interp v env))) elems))] ; Lista
-          [(op f args) (opf f (map (λ (v) (strict (interp v env))) args))] ;op
-          [(iF expr then-expr else-expr) (if (boolV-b (strict (interp expr env)))
+  (match expr
+    [(id i) (lookup i env)] ; Simbolo
+    [(num n) (numV n)] ; Número
+    [(bool b) (boolV b)] ; Booleano
+    [(lisT elems) (listV (map (λ (v) (strict (interp v env))) elems))] ; Lista
+    [(op f args) (opf f (map (λ (v) (strict (interp v env))) args))] ; op
+    [(iF expr then-expr else-expr) (if (boolV-b (strict (interp expr env)))
                                        (interp then-expr env)
                                        (interp else-expr env))]
-          [(fun params body) (closureV params body env)]
-          [(app fun-expr args)
-           (let [(fun-val (strict (interp fun-expr env)))]
-             (interp
-              (closureV-body fun-val)
-              (create-env (closureV-params fun-val) args env)))]
-         ))
+    [(fun params body) (closureV params body env)]
+    [(app fun-expr args)
+     (let [(fun-val (strict (interp fun-expr env)))]
+       (interp
+        (closureV-body fun-val)
+        (create-env (closureV-params fun-val) args env)))]))
 
 ;; Función auxiliar que nos dice si un identificados está asociado a un valor.
 ;; lookup: symbol -> CFBAE/L-Value
