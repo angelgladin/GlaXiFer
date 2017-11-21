@@ -9,11 +9,11 @@ $ chmod -x compressor_helper.sh
 $ sh compressor_helper <FOLDER>
 
 e.g.
-$ ./compressor_helper GlaXiFer_P01
+$ sh compressor_helper GlaXiFer_P01
 COMMENT
 
 RACKET_FILES="$1/*.rkt"
-README="$1/readme.txt"
+README="$1/readme.*"
 tar -zcvf "$1.tar.gz" $RACKET_FILES $README
 
 # Check if the tar command succeed
