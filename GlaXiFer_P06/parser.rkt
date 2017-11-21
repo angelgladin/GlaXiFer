@@ -123,8 +123,13 @@
     [(idS i) (id i)]
     [(numS n) (num n)]
     [(boolS b) (bool b)]
+<<<<<<< HEAD
     [(listS elems) (lisT (map desugar elems))]
     [(opS f args) (op f (map desugar args))]
+=======
+    [(opS f args) (op f (map desugar args))]
+    [(listS elem) (desugar elem)]
+>>>>>>> df57f02c26e25f09fca9344f86a1beac21784e63
     [(ifS expr then-expr else-expr) (iF (desugar expr) (desugar then-expr) (desugar else-expr))]
     [(condS (cons x xs)) (match x
                            [(condition expr then-expr) (desugar (ifS expr then-expr (condS xs)))]
@@ -132,7 +137,13 @@
     [(withS bindings body) (app (fun (map bindingS-name bindings) (desugar body))
                                 (map (λ (v) (desugar (bindingS-value v))) bindings))]
     [(withS* (cons x xs) body) (desugar (withS (list x) (if (empty? xs) body (withS* xs body))))]
+<<<<<<< HEAD
     [(recS bindings body) (app (fun (map bindingS-name bindings) (desugar body))
                                (map (λ (v) (desugar (bindingS-value v))) bindings))]
     [(funS params body) (fun params (desugar body))]
+=======
+    [(funS params body) (fun params (desugar body))]
+    [(recS bindings body) (app (fun (map bindingS-name bindings) (desugar body))
+                               (map (λ (v) (desugar (bindingS-value v))) bindings))]
+>>>>>>> df57f02c26e25f09fca9344f86a1beac21784e63
     [(appS fun-expr args) (app (desugar fun-expr) (map desugar args))]))
