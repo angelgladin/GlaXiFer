@@ -21,9 +21,23 @@
                       (if (boolV-b result)
                           (display "true")
                           (display "false"))]
+                    [(listV? result) (display (listV->list (listV-elems result)))]
                     [else (display "#<function>")]))) 
             (display "\n")
             (RCFWBAEL/L)))))
+
+;; Método auxiliar que dada una lista un listV lo pasa a una lista predeterminada de
+;; Racket para que se vea bien cuando se imprime el valor
+;; listV->list: listof RCFBAEL/L-Value -> list
+(define (listV->list l)
+  (map (λ (v) (match v
+                ; Extraemos el valor del constructor que tiene
+                ; el tipo dato RCFBAEL/L-Value que regresa
+                ; el intérprete.
+                [(? numV?) (numV-n v)]
+                [(? boolV?) (boolV-b v)]
+                [(? listV?) (listV->list (listV-elems v))]
+                [else v])) l))
 
 ;; Línea que recibe los valores de la línea de comandos de acuerdo al lenguaje precedido del 
 ;; parámetro -i que indica qué interprete se ejecutará. Si no se ejecuta 
