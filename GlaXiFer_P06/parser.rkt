@@ -80,11 +80,11 @@
     [(cons 'list elems) (listS (map parse elems))] ; Lista
     [(? number?) (numS sexp)] ; Número
     [(list 'with bindings body) ; With
-     (withS (aux-parse-bindings bindings) (parse body))]
+     (withS (aux-parse-bindingS bindings) (parse body))]
     [(list 'with* bindings body) ; With*
-     (withS* (aux-parse-bindings bindings) (parse body))]
+     (withS* (aux-parse-bindingS bindings) (parse body))]
     [(list 'rec bindings body) ; Rec
-     (recS (aux-parse-bindings bindings) (parse body))]
+     (recS (aux-parse-bindingS bindings) (parse body))]
     [(list 'fun (cons x xs) body) ; Función
      (funS (cons x xs) (parse body))]
     [(list (list 'fun fun-params fun-body) params) ; Aplicación de función
@@ -103,7 +103,7 @@
 
 ;; Función auxiliar que hace un crea una lista de `bindings`.
 ;; aux-parse-bindings list list symbol -> list BindingS
-(define (aux-parse-bindings bindings)
+(define (aux-parse-bindingS bindings)
   (map (λ (v) (bindingS (first v) (parse (second v)))) bindings))
 
 ;; Función auxiliar que hace maneja cada posible valor que puede tener un condition
@@ -132,7 +132,11 @@
     [(withS bindings body) (app (fun (map bindingS-name bindings) (desugar body))
                                 (map (λ (v) (desugar (bindingS-value v))) bindings))]
     [(withS* (cons x xs) body) (desugar (withS (list x) (if (empty? xs) body (withS* xs body))))]
-    [(recS bindings body) (app (fun (map bindingS-name bindings) (desugar body))
-                               (map (λ (v) (desugar (bindingS-value v))) bindings))]
+    [(recS bindings body) (rec (aux-parse-binding bindings) (desugar body))]
     [(funS params body) (fun params (desugar body))]
     [(appS fun-expr args) (app (desugar fun-expr) (map desugar args))]))
+
+;; Función auxiliar que hace un crea una lista de `bindings`.
+;; aux-parse-bindings list list symbol -> list BindingS
+(define (aux-parse-binding bindings)
+  (map (λ (v) (binding (bindingS-name v) (desugar (bindingS-value v)))) bindings))
