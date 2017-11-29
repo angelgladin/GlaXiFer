@@ -155,3 +155,6 @@
 (test (interp (desugar (parse '{tail {list 666 666}})) (mtSub)) (listV (list (numV 666))))
 (test (interp (desugar (parse '{empty? {list 666}})) (mtSub)) (boolV #f))
 (test (interp (desugar (parse '{zero? 0})) (mtSub)) (boolV #t))
+;(test (interp (desugar (parse '{throws DivisionEntreCero})) (mtSub)) (let/cc k (exceptionV 'DivisionEntreCero k)))
+(test (interp (desugar (parse '{try/catch {{DivisionPorCero 2} {MiExcepcion 4}}
+                                          {+ 1 {throws MiExcepcion}}})) (mtSub)) (numV 5))

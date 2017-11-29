@@ -92,7 +92,7 @@
      (ifS (parse cond-expr) (parse then-expr) (parse else-expr))]
     [(cons 'cond conditions) ; Cond
      (condS (aux-parse-conds conditions))]
-    [(list 'throwS exception-id) (throwsS exception-id)] ; Throws
+    [(list 'throws exception-id) (throwsS exception-id)] ; Throws
     [(list 'try/catch bindings body) ; Try/catch
      (try/catchS (aux-parse-bindingS bindings) (parse body))]
     [(cons x xs) ; Aquí hay dos casos; Una operación o aplicación de función
@@ -140,6 +140,6 @@
     [(try/catchS bindings body) (try/catch (aux-parse-binding bindings) (desugar body))]))
 
 ;; Función auxiliar que hace un crea una lista de `bindings`.
-;; aux-parse-bindings list list symbol -> list BindingS
+;; aux-parse-bindings list list symbol -> list Binding
 (define (aux-parse-binding bindings)
   (map (λ (v) (binding (bindingS-name v) (desugar (bindingS-value v)))) bindings))

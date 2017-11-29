@@ -4,9 +4,9 @@
 (require "parser.rkt")
 (require "interp.rkt")
 
-;; Función que ejecuta el intérprete de RCFWBAEL/L con alcance estático, evaluación perezosa y recursividad.
-;; CFWBAEL/L: void
-(define (RCFWBAEL/L)
+;; Función que ejecuta el intérprete de ERCFWBAEL/L con alcance estático, evaluación perezosa y recursividad.
+;; ERCFWBAEL/L: void
+(define (ERCFWBAEL/L)
    (begin
       (display "(λ) ")
       (define x (read))
@@ -22,13 +22,14 @@
                           (display "true")
                           (display "false"))]
                     [(listV? result) (display (listV->list (listV-elems result)))]
+                    [(exceptionV? result) (display (exceptionV-exception-id result))]
                     [else (display "#<function>")]))) 
             (display "\n")
-            (RCFWBAEL/L)))))
+            (ERCFWBAEL/L)))))
 
 ;; Método auxiliar que dada una lista un listV lo pasa a una lista predeterminada de
 ;; Racket para que se vea bien cuando se imprime el valor
-;; listV->list: listof RCFBAEL/L-Value -> list
+;; listV->list: listof ERCFBAEL/L-Value -> list
 (define (listV->list l)
   (map (λ (v) (match v
                 ; Extraemos el valor del constructor que tiene
@@ -47,12 +48,12 @@
 (define (ejecuta)
    (let ([args (current-command-line-arguments)])
       (cond
-         [(zero? (vector-length args)) (RCFWBAEL/L)]
+         [(zero? (vector-length args)) (ERCFWBAEL/L)]
          [(equal? (vector-ref args 0) "-i")
             (cond
                [(= (vector-length args) 2)
                   (match (vector-ref args 1)
-                     ["RCFWBAEL/L" (RCFWBAEL/L)]
+                     ["RCFWBAEL/L" (ERCFWBAEL/L)]
                      [else (error 'ejecuta "Language not defined")])]
                [else (error 'ejecuta "Language not specified")])])))
 
