@@ -7,34 +7,34 @@
 	[numS (n number?)]
 	[boolS (b boolean?)]
 	[listS (elems (listof BERCFWBAEL/L?))]
-	[opS (f procedure ?) (args (listof BERCFWBAEL/L?))]
-	[ifS (expr BERCFWBAEL/L ?) (then-expr BERCFWBAEL/L ?) (else-expr BERCFWBAEL/L ?)]
+	[opS (f procedure?) (args (listof BERCFWBAEL/L?))]
+	[ifS (expr BERCFWBAEL/L?) (then-expr BERCFWBAEL/L?) (else-expr BERCFWBAEL/L?)]
 	[condS (cases (listof Condition?))]
-	[withS (bindings (listof bindingS?)) (body BERCFWBAEL/L ?)]
-	[withS* (bindings (listof bindingS?)) (body BERCFWBAEL/L ?)]
-	[recS (bindings (listof bindingS?)) (body BERCFWBAEL/L ?)]
+	[withS (bindings (listof bindingS?)) (body BERCFWBAEL/L?)]
+	[withS* (bindings (listof bindingS?)) (body BERCFWBAEL/L?)]
+	[recS (bindings (listof bindingS?)) (body BERCFWBAEL/L?)]
 	[funS (params (listof symbol?)) (body BERCFWBAEL/L?)]
 	[appS (fun-expr BERCFWBAEL/L?) (args (listof BERCFWBAEL/L?))]
-	[throwsS (exception-id symbol ?)]
+	[throwsS (exception-id symbol?)]
 	[try/catchS (bindings (listof bindingS?)) (body BERCFWBAEL/L?)]
 	[newboxS (contents BERCFWBAEL/L?)]
 	[openboxS (box BERCFWBAEL/L?)]
 	[setboxS (box BERCFWBAEL/L?) (contents BERCFWBAEL/L?)]
-	[seqnS (actions (listof BERCFWBAEL/L?))]
+	[seqnS (actions (listof BERCFWBAEL/L?))])
 
 ;; TDA para representar los árboles de sintaxis abstracta del
 ;; lenguaje BERCFBAEL/L. Este TDA es una versión sin azúcar sintáctica.
 (define-type BERCFBAEL/L
-	[id (isymbol?)]
+	[id (i symbol?)]
 	[num (n number?)]
 	[bool (b boolean?)]
-	[lisT (elems (listof BERCFBAEL/L ?))]
-	[op (f procedure?) (args (listof BERCFBAEL/L ?))]
+	[lisT (elems (listof BERCFBAEL/L?))]
+	[op (f procedure?) (args (listof BERCFBAEL/L?))]
 	[iF (expr BERCFBAEL/L?) (then-expr BERCFBAEL/L?) (else-expr BERCFBAEL/L?)]
 	[fun (params (listof symbol?)) (body BERCFBAEL/L?)]
 	[rec (bindings (listof Binding?)) (body BERCFBAEL/L?)]
 	[app (fun-expr BERCFBAEL/L?) (args (listof BERCFBAEL/L?))]
-	[throws (exception-id symbol ?)]
+	[throws (exception-id symbol?)]
 	[try/catch (bindings (listof Binding?)) (body BERCFBAEL/L?)]
 	[newbox (contents BERCFBAEL/L?)]
 	[openbox (box BERCFBAEL/L?)]
@@ -48,7 +48,7 @@
 	[closureV (params (listof symbol?)) (body BERCFBAEL/L?) (env Env?)]
 	[exprV (expr BERCFBAEL/L?) (env Env?)]
 	[listV (listof (BERCFBAEL/L-Value?))]
-	[exceptionV (exception-id symbol ?) (continuation continuation?)]
+	[exceptionV (exception-id symbol?) (continuation continuation?)]
 	[boxV (location number?)])
 
 ;; TDA para asociar identificadores con valores con azúcar sintáctica .
@@ -72,7 +72,7 @@
 ;; TDA para representar el store
 (define-type Store
 	[mtSto]
-	[aSto (index number?) (value BERCFBAEL/L-Value?) (sto Store ?)])
+	[aSto (index number?) (value BERCFBAEL/L-Value?) (sto Store?)])
 
 (define-type Value*Store
-   [v*s (value BRCFAE-Value?) (store Store?)])
+   [v*s (value BERCFBAEL/L-Value?) (store Store?)])
