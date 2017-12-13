@@ -47,7 +47,7 @@
 	[boolV (b boolean?)]
 	[closureV (params (listof symbol?)) (body BERCFBAEL/L?) (env Env?)]
 	[exprV (expr BERCFBAEL/L?) (env Env?)]
-	[listV (listof (BERCFBAEL/L-Value?))]
+	[listV (elems (listof BERCFBAEL/L-Value?))]
 	[exceptionV (exception-id symbol?) (continuation continuation?)]
 	[boxV (location number?)])
 
@@ -76,3 +76,6 @@
 
 (define-type Value*Store
    [v*s (value BERCFBAEL/L-Value?) (store Store?)])
+
+(define-type List-Value*Store
+  [lv*s (value (listof BERCFBAEL/L-Value?)) (store Store?)])
