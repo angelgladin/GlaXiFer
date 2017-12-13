@@ -16,12 +16,17 @@
     (set-box! current-location (+ 1 (unbox current-location)))
     (unbox current-location)))
 
-;; Función encargada de interpretar el árbol de sintaxis abstracta generado por el parser. El
-;; intérprete requiere un ambiente de evaluación en esta versión para buscar el valor de los 
-;; identificadores.
+;; Función encargada de interpretar el árbol de sintaxis abstracta generado por el
+;; parser. El intérprete requiere un ambiente de evaluación en esta versión para
+;; buscar el valor de los identificadores.
 ;; interp: BERCFBAEL/L Env Store -> BERCFBAEL/L-Value
 (define (interp expr env store)
-  (match expr
+  (v*s-value (interp-aux expr env store)))
+
+;; Wrapper del `interp`. 
+;; interp-aux: BERCFBAEL/L Env Store -> Value*Store
+(define (interp-aux expr env store)
+    (match expr
     [(id i) (v*s (store-lookup (env-lookup i env) store) store)]
     [(num n) (v*s (numV n) store)]
     [(bool b) (v*s (boolV b) store)]
@@ -30,46 +35,51 @@
     [(op f args) (let ([interpreted-args (carry-store-to-last-expr args env store '())])
                    (v*s (opf f (lv*s-value interpreted-args)) (lv*s-store interpreted-args)))]
     [(iF expr then-expr else-expr)
-     (let* ([cond (strict (interp expr env store))]
+     (let* ([cond (strict (interp-aux expr env store))]
             [cond-value (v*s-value cond)]
             [cond-store (v*s-store cond)])
        (if (exceptionV? cond-value)
            (v*s cond-value cond-store)
            (if (boolV-b cond-value)
-               (interp then-expr env cond-store)
-               (interp else-expr env cond-store))))]
+               (interp-aux then-expr env cond-store)
+               (interp-aux else-expr env cond-store))))]
     [(fun params body) (v*s (closureV params body env) store)]
+      ;; INCOMPLETO :(
     #|[(rec bindings body)
      (let* ([location (nextlocation)]
             [new-env (aSub id location env)]
-            [result (interp value new-env store)]
+            [result (interp-aux value new-env store)]
             [result-value (v*s-value result)]
             [result-store (v*s-store result)]
             [new-store (aSto location result-value result-store)])
-       (interp
+       (interp-aux
         body
         new-env
         new-store))
-     (interp body (cyclically-bind-and-interp bindings env))]
+     (interp-aux body (cyclically-bind-and-interp-aux bindings env))]
 |#
     [(app fun-expr args)
-     (let* ([fun-res (strict (interp fun-expr env store))]
+     (let* ([fun-res (strict (interp-aux fun-expr env store))]
             [fun-res-val (v*s-value fun-res)]
             [fun-res-store (v*s-store fun-res)]
             [interpreted-args (carry-store-to-last-expr args env fun-res-store '())]
             [interpreted-args-val (lv*s-value interpreted-args)]
-            [interpreted-args-store (lv*s-store interpreted-args)]
-            [location (nextlocation)])
+            [interpreted-args-store (lv*s-store interpreted-args)])
        (if (exceptionV? fun-res-val)
            (v*s fun-res-val fun-res-store)
-           (interp
+           (interp-aux
+            ;; INCOMPLETO :(
+            (let* ([location (nextlocation)])
             (closureV-body fun-res-val)
             (create-env (closureV-params fun-res-val) interpreted-args-val env location)
-            interpreted-args-store)))]
+            (aSto
+             location
+             interpreted-args-store)))))]
     [(throws exception-id)
      (v*s (let/cc k (exceptionV exception-id k)) store)]
     [(try/catch bindings body)
-     (let* ([expr-body (strict (interp body env))]
+     ;; INCOMPLETO :(
+     (let* ([expr-body (strict (interp-aux body env))]
             ; Función anónima que devolverá el binding de la excepción, cabe
             ; resaltar que nunca devolverá 'nil porque solo se llamará en caso de
             ; que se tenga un excepción, por eso lo definí como función.
@@ -80,25 +90,25 @@
                 (equal? (exceptionV-exception-id expr-body)
                         (binding-name (catched-exception (exception-id)))))
            ; En caso de que se haya detecatado una excepción
-           ((exceptionV-continuation expr-body) (interp (binding-value (catched-exception (exception-id))) env))
+           ((exceptionV-continuation expr-body) (interp-aux (binding-value (catched-exception (exception-id))) env))
            expr-body))]
     
     [(newbox box)
      (let* ([location (nextlocation)]
-            [result (interp box env store)]
+            [result (interp-aux box env store)]
             [box-value (v*s-value result)]
             [box-store (v*s-store result)])
        (v*s (boxV location) (aSto location box-value box-store)))]
     [(setbox box value)
-     (let* ([boxv (interp box env store)]
+     (let* ([boxv (interp-aux box env store)]
             [boxv-value (v*s-value boxv)]
             [boxv-store (v*s-store boxv)]
-            [val (interp value env boxv-store)]
+            [val (interp-aux value env boxv-store)]
             [val-value (v*s-value val)]
             [val-store (v*s-store val)])
        (v*s val-value (aSto (boxV-location boxv-value) val-value val-store)))]
     [(openbox box)
-     (let* ([boxv (interp box env store)]
+     (let* ([boxv (interp-aux box env store)]
             [box-value (v*s-value boxv)]
             [box-store (v*s-store boxv)])
        (v*s (store-lookup (boxV-location box-value) box-store) box-store))]
@@ -106,7 +116,7 @@
      (letrec ([carry-store-and-execute-last-action
                (λ (x store-aux) (let* ([head (car x)]
                                        [tail (cdr x)]
-                                       [a1 (interp head env store-aux)]
+                                       [a1 (interp-aux head env store-aux)]
                                        [a1-store (v*s-store a1)])
                                   (match tail
                                     ['() a1]
@@ -128,7 +138,7 @@
     ; el store. Obtenemos el store porque queremos pasarle el store al (i+1)-ésimo
     ; elemento. En nuestro acumulador pegamos a la cabeza el valor del primer elemento.
     [(cons x xs)
-     (let* ([first (strict (interp x env store))]
+     (let* ([first (strict (interp-aux x env store))]
             [first-val (v*s-value first)]
             [first-store (v*s-store first)])
        (carry-store-to-last-expr xs env first-store (cons first-val acc)))]))
