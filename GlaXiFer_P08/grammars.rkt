@@ -36,9 +36,9 @@
 	[app (fun-expr BERCFBAEL/L?) (args (listof BERCFBAEL/L?))]
 	[throws (exception-id symbol?)]
 	[try/catch (bindings (listof Binding?)) (body BERCFBAEL/L?)]
-	[newbox (contents BERCFBAEL/L?)]
+	[newbox (content BERCFBAEL/L?)]
 	[openbox (box BERCFBAEL/L?)]
-	[setbox (box BERCFBAEL/L?) (contents BERCFWBAEL/L?)]
+	[setbox (box BERCFBAEL/L?) (content BERCFWBAEL/L?)]
 	[seqn (actions (listof BERCFBAEL/L?))])
 
 ;; TDA para representar los resultados devueltos por el intérprete .

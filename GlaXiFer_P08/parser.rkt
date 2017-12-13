@@ -163,8 +163,8 @@
     [(try/catchS bindings body) (try/catch (aux-parse-binding bindings) (desugar body))]
     [(newboxS contents) (newbox (desugar contents))]
     [(openboxS box) (openbox (desugar box))]
-    [(setboxS box contents) (setboxS (desugar box) (desugar contents))]
-    [(seqnS actions) (seqnS (map desugar actions))]))
+    [(setboxS box contents) (setbox (desugar box) (desugar contents))]
+    [(seqnS actions) (seqn (map desugar actions))]))
 
 ;; Función auxiliar que hace un crea una lista de `bindings`.
 ;; aux-parse-bindings list list symbol -> list Binding
