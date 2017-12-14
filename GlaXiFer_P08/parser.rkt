@@ -153,11 +153,11 @@
     [(condS (cons x xs)) (match x
                            [(condition expr then-expr) (desugar (ifS expr then-expr (condS xs)))]
                            [(else-cond else-expr)  (desugar else-expr)])]
-    [(withS bindings body) (app (fun (map bindingS-name bindings) (desugar body))
-                                (map (λ (v) (desugar (bindingS-value v))) bindings))]
-    [(withS* (cons x xs) body) (desugar (withS (list x) (if (empty? xs) body (withS* xs body))))]
+    [(withS binding body) (app (fun (bindingS-name binding) (desugar body))
+                                (desugar (bindingS-value binding)))]
+    [(withS* (cons x xs) body) (desugar (withS x (if (empty? xs) body (withS* xs body))))]
     [(recS bindings body) (rec (aux-parse-binding bindings) (desugar body))]
-    [(funS params body) (fun params (desugar body))]
+    [(funS params body) (fun (map desugar params) (desugar body))]
     [(appS fun-expr args) (app (desugar fun-expr) (map desugar args))]
     [(throwsS exception-id) (throws exception-id)]
     [(try/catchS bindings body) (try/catch (aux-parse-binding bindings) (desugar body))]

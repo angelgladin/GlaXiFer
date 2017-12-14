@@ -19,9 +19,10 @@
 ;; Función encargada de interpretar el árbol de sintaxis abstracta generado por el
 ;; parser. El intérprete requiere un ambiente de evaluación en esta versión para
 ;; buscar el valor de los identificadores.
-;; interp: BERCFBAEL/L Env Store -> BERCFBAEL/L-Value
+;; interp: BERCFBAEL/L Env Store -> ERCFBAEL/L-Value
 (define (interp expr env store)
-  (v*s-value (interp-aux expr env store)))
+ ; (v*s-value
+  (interp-aux expr env store));))
 
 ;; Wrapper del `interp`. 
 ;; interp-aux: BERCFBAEL/L Env Store -> Value*Store
@@ -43,38 +44,35 @@
            (if (boolV-b cond-value)
                (interp-aux then-expr env cond-store)
                (interp-aux else-expr env cond-store))))]
-    [(fun params body) (v*s (closureV params body env) store)]
-      ;; INCOMPLETO :(
-    #|[(rec bindings body)
+    [(fun params body) (v*s (closureV params body env) store)] 
+
+    [(rec bindings body)
      (let* ([location (nextlocation)]
-            [new-env (aSub id location env)]
-            [result (interp-aux value new-env store)]
+            [new-env (aRecSub (binding-name (second bindings)) location env)]
+            [args (list (binding-value (second bindings)))]
+            [result (interp-aux (app (binding-value (first bindings)) args) env store)]
             [result-value (v*s-value result)]
             [result-store (v*s-store result)]
             [new-store (aSto location result-value result-store)])
-       (interp-aux
-        body
-        new-env
-        new-store))
-     (interp-aux body (cyclically-bind-and-interp-aux bindings env))]
-|#
+       (interp-aux body new-env new-store))]
+      
     [(app fun-expr args)
      (let* ([fun-res (strict (interp-aux fun-expr env store))]
             [fun-res-val (v*s-value fun-res)]
             [fun-res-store (v*s-store fun-res)]
             [interpreted-args (carry-store-to-last-expr args env fun-res-store '())]
             [interpreted-args-val (lv*s-value interpreted-args)]
-            [interpreted-args-store (lv*s-store interpreted-args)])
-       (if (exceptionV? fun-res-val)
+            [interpreted-args-store (lv*s-store interpreted-args)]
+            [location (nextlocation)])
+      (if (exceptionV? fun-res-val)
            (v*s fun-res-val fun-res-store)
            (interp-aux
-            ;; INCOMPLETO :(
-            (let* ([location (nextlocation)])
             (closureV-body fun-res-val)
             (create-env (closureV-params fun-res-val) interpreted-args-val env location)
             (aSto
              location
-             interpreted-args-store)))))]
+             interpreted-args-val
+             interpreted-args-store))))]
     [(throws exception-id)
      (v*s (let/cc k (exceptionV exception-id k)) store)]
     [(try/catch bindings body)
@@ -130,7 +128,7 @@
 ;; carry-store-to-last-expr: (listof BERCFBAEL/L) Env Store list -> List-Value*Store
 (define (carry-store-to-last-expr args env store acc)
   (match args
-    ; Caso base donde se ha explarado toda la lista de argumento. Como se fueron
+    ; Caso base donde se ha explorado toda la lista de argumento. Como se fueron
     ; agregando los elementos al acumulador en la cabeza, la lista resultante está
     ; al revés es por eso que la volteamos al final.
     ['() (lv*s (reverse acc) store)]
@@ -160,6 +158,10 @@
   (match env
     [(mtSub) (error 'lookup "Identificador libre")]
     [(aSub sub-id location rest-env)
+     (if (symbol=? id sub-id)
+         location
+         (env-lookup id rest-env))]
+    [(aRecSub sub-id location rest-env)
      (if (symbol=? id sub-id)
          location
          (env-lookup id rest-env))]))
@@ -205,7 +207,7 @@
     [(exprV expr env) (strict (interp expr env))]
     [else e]))
 
-;; Función auxiliar que creo un ambiente y va emparejando los parametros
+;; Función auxiliar que crea un ambiente y va emparejando los parametros
 ;; formales con los argumentos.
 ;; create-env: (listof symbol) (listof BERCFBAEL/L)  Env Integer -> Env
 (define (create-env params args env location)
@@ -214,4 +216,4 @@
     [(cons x xs)
      (if (empty? args)
          (error "Missing arguments")
-         (create-env xs (cdr args) (aSub x (exprV (car args) env) env)))]))
+         (create-env xs (cdr args) (aSub x (exprV (car args) env) env) location))]))
