@@ -21,8 +21,7 @@
 ;; buscar el valor de los identificadores.
 ;; interp: BERCFBAEL/L Env Store -> ERCFBAEL/L-Value
 (define (interp expr env store)
- ; (v*s-value
-  (interp-aux expr env store));))
+  (v*s-value (interp-aux expr env store)))
 
 ;; Wrapper del `interp`. 
 ;; interp-aux: BERCFBAEL/L Env Store -> Value*Store
@@ -56,23 +55,26 @@
             [new-store (aSto location result-value result-store)])
        (interp-aux body new-env new-store))]
       
-    [(app fun-expr args)
+    [(app fun-expr arg)
      (let* ([fun-res (strict (interp-aux fun-expr env store))]
             [fun-res-val (v*s-value fun-res)]
             [fun-res-store (v*s-store fun-res)]
-            [interpreted-args (carry-store-to-last-expr args env fun-res-store '())]
-            [interpreted-args-val (lv*s-value interpreted-args)]
-            [interpreted-args-store (lv*s-store interpreted-args)]
+            [arg-res (interp arg env fun-res-store)]
+            [arg-res-val (v*s-value arg-res)]
+            [arg-res-store (v*s-store arg-res)]
             [location (nextlocation)])
       (if (exceptionV? fun-res-val)
            (v*s fun-res-val fun-res-store)
            (interp-aux
             (closureV-body fun-res-val)
-            (create-env (closureV-params fun-res-val) interpreted-args-val env location)
+            (aSub
+             (first (closureV-param fun-res-val))
+             location
+             (closureV-env fun-res-val))
             (aSto
              location
-             interpreted-args-val
-             interpreted-args-store))))]
+             arg-res-val
+             arg-res-store))))]
     [(throws exception-id)
      (v*s (let/cc k (exceptionV exception-id k)) store)]
     [(try/catch bindings body)
@@ -216,4 +218,4 @@
     [(cons x xs)
      (if (empty? args)
          (error "Missing arguments")
-         (create-env xs (cdr args) (aSub x (exprV (car args) env) env) location))]))
+         (create-env xs (cdr args) (aSub x (car args) env) location))]))
