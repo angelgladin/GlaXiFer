@@ -24,21 +24,22 @@
 (define (interp expr env store)
   (v*s-value (interp-aux expr env store)))
 
-
 ;; Wrapper de la función `interp`. 
 ;; interp-aux: BERCFBAEL/L Env Store -> Value*Store
 (define (interp-aux expr env store)
   (match expr
-    [(id i) (v*s (store-lookup (env-lookup i env) store) store)]
+    [(id i) (begin (println store)(v*s (store-lookup (env-lookup i env) store) store))]
     [(num n) (v*s (numV n) store)]
     [(bool b) (v*s (boolV b) store)]
     [(lisT elems) (let ([interpreted-args (carry-store-to-last-expr elems env store '())])
                     (v*s (listV (lv*s-value interpreted-args)) (lv*s-store interpreted-args)))]
     [(op f args) (let* ([interpreted-args (carry-store-to-last-expr args env store '())]
-                        [unboxed-args (map strict (lv*s-value interpreted-args))])
-                   (v*s (opf f unboxed-args) (lv*s-store interpreted-args)))]
+                        [new-store (lv*s-store interpreted-args)]
+                        ;[h (print new-store)]
+                        [unboxed-args (map (λ (x) (strict x new-store)) (lv*s-value interpreted-args))])
+                   (v*s (opf f unboxed-args) new-store))]
     [(iF expr then-expr else-expr)
-     (let* ([cond (strict (interp-aux expr env store))]
+     (let* ([cond (strict (interp-aux expr env store) store)]
             [cond-value (v*s-value cond)]
             [cond-store (v*s-store cond)])
        (if (exceptionV? cond-value)
@@ -61,24 +62,25 @@
         new-env
         new-store))]
     [(app fun-expr args)
-     (let* ([fun-res (strict (interp-aux fun-expr env store))]
-            [fun-res-val (v*s-value fun-res)]
-            [fun-res-store (v*s-store fun-res)])
+     (begin ;(print store)
+     (let* ([fun-res (interp-aux fun-expr env store)]
+            [fun-res-store (v*s-store fun-res)]
+            [fun-res-val (strict (v*s-value fun-res) store)])
        (if (exceptionV? fun-res-val)
            (v*s fun-res-val fun-res-store)
-             (let* ([binded-env-store (bind-env-store (closureV-params fun-res-val)
+           (let* ([binded-env-store (bind-env-store (closureV-params fun-res-val)
                                                     args
                                                     (closureV-env fun-res-val)
                                                     fun-res-store)]
                   [new-env (e*s-env binded-env-store)]
                   [new-store (e*s-store binded-env-store)]
                   [closure-body (closureV-body fun-res-val)])
-             (interp-aux closure-body new-env new-store))))]
+             (interp-aux closure-body new-env new-store)))))]
     [(throws exception-id)
      (v*s (let/cc k (exceptionV exception-id k)) store)]
     [(try/catch bindings body)
      ;; INCOMPLETO :(
-     (let* ([expr-body (strict (interp-aux body env store))]
+     (let* ([expr-body (strict (interp-aux body env))]
             ; Función anónima que devolverá el binding de la excepción, cabe
             ; resaltar que nunca devolverá 'nil porque solo se llamará en caso de
             ; que se tenga un excepción, por eso lo definí como función.
@@ -100,16 +102,16 @@
        (v*s (boxV location) (aSto location box-value box-store)))]
     [(setbox box value)
      (let* ([boxv (interp-aux box env store)]
-            [boxv-value (v*s-value boxv)]
             [boxv-store (v*s-store boxv)]
+            [boxv-value (strict (v*s-value boxv) boxv-store)]
             [val (interp-aux value env boxv-store)]
-            [val-value (v*s-value val)]
+            [val-value (strict (v*s-value val) store)]
             [val-store (v*s-store val)])
        (v*s val-value (aSto (boxV-location boxv-value) val-value val-store)))]
     [(openbox box)
      (let* ([boxv (interp-aux box env store)]
-            [box-value (v*s-value boxv)]
-            [box-store (v*s-store boxv)])
+            [box-store (v*s-store boxv)]
+            [box-value (strict (v*s-value boxv) box-store)])
        (v*s (store-lookup (boxV-location box-value) box-store) box-store))]
     [(seqn actions)
      (letrec ([carry-store-and-execute-last-action
@@ -118,11 +120,11 @@
                                        [a1 (interp-aux head env store-aux)]
                                        [a1-store (v*s-store a1)])
                                   (match tail
-                                    ['() a1]
+                                    ['() (interp a1 env a1-store)]
                                     [else (carry-store-and-execute-last-action tail a1-store)])))])
        (carry-store-and-execute-last-action actions store))]))
 
-;(trace interp-aux)
+
 
 ;; Función auxiliar encargada de evaluar la i-ésima expresión de una lista de
 ;; BERCFBAEL/L para pasarle al (i+1)-ésimo elemento el store anterior.
@@ -140,10 +142,13 @@
     ; el store. Obtenemos el store porque queremos pasarle el store al (i+1)-ésimo
     ; elemento. En nuestro acumulador pegamos a la cabeza el valor del primer elemento.
     [(cons x xs)
-     (let* ([first (strict (interp-aux x env store))]
+     (let* ([first (strict (interp-aux x env store) store)]
             [first-val (v*s-value first)]
             [first-store (v*s-store first)])
        (carry-store-to-last-expr xs env first-store (cons first-val acc)))]))
+
+
+;(trace interp-aux)
 
 ;; Función auxiliar que va "emparejando" los parametros del ambiente con los del store.
 ;; Al final regresará un par con el ambiente y el store con los valores.
@@ -173,12 +178,13 @@
 ;; store indicado.
 ;; lookup: symbol -> BERCFBAEL/L-Value
 (define (store-lookup index store)
-  (match store
-    [(mtSto) (error 'lookup "Valor no almacenado")]
-    [(aSto location value rest-store)
-     (if (= location index)
-         value
-         (store-lookup index rest-store))]))
+  (begin ;(println store)
+         (match store
+           [(mtSto) (error 'lookup "Valor no almacenado")]
+           [(aSto location value rest-store)
+            (if (= location index)
+                value
+                (store-lookup index rest-store))])))
 
 ;; Función auxiliar que dada un operación y una lista de argumentos,
 ;; aplica dicha aperación a los argumentos.
@@ -215,7 +221,7 @@
 
 ;; Función que fuerza la evaluación de una expresión BERCFBAEL/L-Value.
 ;; strict: BERCFBAEL/L-Value -> BERCFBAEL/L-Value
-(define (strict e)
+(define (strict e store)
   (match e
-    [(exprV expr env) (strict (interp expr env (mtSto)))]
+    [(exprV expr env) (strict (interp expr env store) store)]
     [else e]))
