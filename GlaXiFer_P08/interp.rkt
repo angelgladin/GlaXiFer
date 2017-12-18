@@ -28,14 +28,13 @@
 ;; interp-aux: BERCFBAEL/L Env Store -> Value*Store
 (define (interp-aux expr env store)
   (match expr
-    [(id i) (begin (println store)(v*s (store-lookup (env-lookup i env) store) store))]
+    [(id i) (v*s (store-lookup (env-lookup i env) store) store)]
     [(num n) (v*s (numV n) store)]
     [(bool b) (v*s (boolV b) store)]
     [(lisT elems) (let ([interpreted-args (carry-store-to-last-expr elems env store '())])
                     (v*s (listV (lv*s-value interpreted-args)) (lv*s-store interpreted-args)))]
     [(op f args) (let* ([interpreted-args (carry-store-to-last-expr args env store '())]
                         [new-store (lv*s-store interpreted-args)]
-                        ;[h (print new-store)]
                         [unboxed-args (map (λ (x) (strict x new-store)) (lv*s-value interpreted-args))])
                    (v*s (opf f unboxed-args) new-store))]
     [(iF expr then-expr else-expr)
@@ -61,21 +60,19 @@
         body
         new-env
         new-store))]
-    [(app fun-expr args)
-     (begin ;(print store)
-     (let* ([fun-res (interp-aux fun-expr env store)]
-            [fun-res-store (v*s-store fun-res)]
-            [fun-res-val (strict (v*s-value fun-res) store)])
-       (if (exceptionV? fun-res-val)
-           (v*s fun-res-val fun-res-store)
-           (let* ([binded-env-store (bind-env-store (closureV-params fun-res-val)
-                                                    args
-                                                    (closureV-env fun-res-val)
-                                                    fun-res-store)]
-                  [new-env (e*s-env binded-env-store)]
-                  [new-store (e*s-store binded-env-store)]
-                  [closure-body (closureV-body fun-res-val)])
-             (interp-aux closure-body new-env new-store)))))]
+    [(app fun-expr args)(let* ([fun-res (interp-aux fun-expr env store)]
+                               [fun-res-store (v*s-store fun-res)]
+                               [fun-res-val (strict (v*s-value fun-res) store)])
+                          (if (exceptionV? fun-res-val)
+                              (v*s fun-res-val fun-res-store)
+                              (let* ([binded-env-store (bind-env-store (closureV-params fun-res-val)
+                                                                       args
+                                                                       (closureV-env fun-res-val)
+                                                                       fun-res-store)]
+                                     [new-env (e*s-env binded-env-store)]
+                                     [new-store (e*s-store binded-env-store)]
+                                     [closure-body (closureV-body fun-res-val)])
+                                (interp-aux closure-body new-env new-store))))]
     [(throws exception-id)
      (v*s (let/cc k (exceptionV exception-id k)) store)]
     [(try/catch bindings body)
@@ -178,13 +175,12 @@
 ;; store indicado.
 ;; lookup: symbol -> BERCFBAEL/L-Value
 (define (store-lookup index store)
-  (begin ;(println store)
-         (match store
-           [(mtSto) (error 'lookup "Valor no almacenado")]
-           [(aSto location value rest-store)
-            (if (= location index)
-                value
-                (store-lookup index rest-store))])))
+  (match store
+    [(mtSto) (error 'lookup "Valor no almacenado")]
+    [(aSto location value rest-store)
+     (if (= location index)
+         value
+         (store-lookup index rest-store))]))
 
 ;; Función auxiliar que dada un operación y una lista de argumentos,
 ;; aplica dicha aperación a los argumentos.
