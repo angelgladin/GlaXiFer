@@ -38,7 +38,7 @@
 	[try/catch (bindings (listof Binding?)) (body BERCFBAEL/L?)]
 	[newbox (content BERCFBAEL/L?)]
 	[openbox (box BERCFBAEL/L?)]
-	[setbox (box BERCFBAEL/L?) (content BERCFWBAEL/L?)]
+	[setbox (box BERCFBAEL/L?) (content BERCFBAEL/L?)]
 	[seqn (actions (listof BERCFBAEL/L?))])
 
 ;; TDA para representar los resultados devueltos por el intérprete .
