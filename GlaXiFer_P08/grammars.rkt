@@ -79,3 +79,6 @@
 
 (define-type List-Value*Store
   [lv*s (value (listof BERCFBAEL/L-Value?)) (store Store?)])
+
+(define-type Env*Store
+  [e*s (env Env?) (store Store?)])

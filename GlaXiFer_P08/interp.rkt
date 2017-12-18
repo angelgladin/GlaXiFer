@@ -26,7 +26,7 @@
 ;; Wrapper del `interp`. 
 ;; interp-aux: BERCFBAEL/L Env Store -> Value*Store
 (define (interp-aux expr env store)
-    (match expr
+  (match expr
     [(id i) (v*s (store-lookup (env-lookup i env) store) store)]
     [(num n) (v*s (numV n) store)]
     [(bool b) (v*s (boolV b) store)]
@@ -44,7 +44,7 @@
                (interp-aux then-expr env cond-store)
                (interp-aux else-expr env cond-store))))]
     [(fun params body) (v*s (closureV params body env) store)]
-      ;; INCOMPLETO :(
+    
     #|[(rec bindings body)
      (let* ([location (nextlocation)]
             [new-env (aSub id location env)]
@@ -67,14 +67,14 @@
             [interpreted-args-store (lv*s-store interpreted-args)])
        (if (exceptionV? fun-res-val)
            (v*s fun-res-val fun-res-store)
-           (interp-aux
-            ;; INCOMPLETO :(
-            (let* ([location (nextlocation)])
-            (closureV-body fun-res-val)
-            (create-env (closureV-params fun-res-val) interpreted-args-val env location)
-            (aSto
-             location
-             interpreted-args-store)))))]
+           (let* ([binded-env-store (bind-env-store (closureV-params fun-res-val)
+                                                    interpreted-args-val
+                                                    (closureV-env fun-res-val)
+                                                    interpreted-args-store)]
+                  [new-env (e*s-env binded-env-store)]
+                  [new-store (e*s-store binded-env-store)]
+                  [closure-body (closureV-body fun-res-val)])
+             (interp-aux closure-body new-env new-store))))]
     [(throws exception-id)
      (v*s (let/cc k (exceptionV exception-id k)) store)]
     [(try/catch bindings body)
@@ -126,7 +126,8 @@
 ;; Función auxiliar encargada de evaluar la i-ésima expresión de una lista de
 ;; BERCFBAEL/L para pasarle al (i+1)-ésimo elemento el store anterior.
 ;; Se utilizó la técnica de recursión de cola, para esto `acc` se tomó como acumulador.
-;; El acumulador será una lista de BERCFBAEL/L-Value
+;; El acumulador será un List-Value*Store. Se hizo este tipo de dato para envolver
+;; los parámetros.
 ;; carry-store-to-last-expr: (listof BERCFBAEL/L) Env Store list -> List-Value*Store
 (define (carry-store-to-last-expr args env store acc)
   (match args
@@ -138,11 +139,22 @@
     ; el store. Obtenemos el store porque queremos pasarle el store al (i+1)-ésimo
     ; elemento. En nuestro acumulador pegamos a la cabeza el valor del primer elemento.
     [(cons x xs)
-     (let* ([first (strict (interp-aux x env store))]
+     (let* ([first (interp-aux x env store)]
             [first-val (v*s-value first)]
             [first-store (v*s-store first)])
        (carry-store-to-last-expr xs env first-store (cons first-val acc)))]))
-
+;;
+;; bind-env-store
+(define (bind-env-store params vals env store)
+  (match params
+    ['() (e*s env store)]
+    [(cons head-params tail-params)
+     (let* ([head-vals (car vals)]
+            [tail-vals (cdr vals)]
+            [location (nextlocation)]
+            [new-env (aSub head-params location env)]
+            [new-store (aSto location head-vals store)])
+       (bind-env-store tail-params tail-vals new-env new-store))]))
 
 ;; Función auxiliar que nos devuelve el valor asociado a un identificador.
 ;; lookup: symbol -> BERCFBAEL/L-Value
@@ -168,7 +180,7 @@
 ;; Función auxiliar que dada un operación y una lista de argumentos,
 ;; aplica dicha aperación a los argumentos.
 ;; En el caso de que se encuentra un excepción, la regresará.
-;; opf: procedure list -> ERCFBAEL/L-Value
+;; opf: procedure (listof BERCFBAEL) -> ERCFBAEL/L-Value
 (define (opf f l)
   ; Obtenemos una lista con la(s) excepción(es) que podría tener los elementos.
   (let ([exceptions (filter exceptionV? l)])
@@ -181,9 +193,9 @@
                                              ; Extraemos el valor del constructor que tiene
                                              ; el tipo dato RCFBAEL/L-Value que regresa
                                              ; el intérprete.
-                                             [(? numV?) (numV-n v)]
-                                             [(? boolV?) (boolV-b v)]
-                                             [(? listV?) (listV-elems v)])) l))])
+                                             [(? numV?) (strict (numV-n v))]
+                                             [(? boolV?) (strict (boolV-b v))]
+                                             [(? listV?) (strict (listV-elems v))])) l))])
           ; De acuerdo el tipo de función, nos fijaremos en el contradominio de ésta
           ; para poder asociar el tipo de dato que regresará.
           (cond
