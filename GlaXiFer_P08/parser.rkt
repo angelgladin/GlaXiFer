@@ -75,6 +75,7 @@
     [(? symbol?) (case sexp
                    ['true (boolS #t)] ; Booleano verdadero: 'true
                    ['false (boolS #f)] ; Booleano false: 'false
+                   ['empty (listS '())]
                    [else (idS sexp)])] ; Identificador: 'foo
     ; Si es una Lista: {list 1 2 3}
     [(cons 'list elems) (listS (map parse elems))]
@@ -109,7 +110,7 @@
     ; Try/catch: {try/catch {{MiExcepcion 666}} {+ 0 {throws MiExcepcion}}}
     [(list 'try/catch bindings body)
      (try/catchS (aux-parse-bindingS bindings) (parse body))]
-    ; Si es una nueva caja: {newbox 666}
+    ; Si es una nueva caja: {box 666}
     [(list 'box value) (newboxS (parse value))]
     ; Si se asigna valor a una caja: {setbox caja 666}
     [(list 'setbox box value) (setboxS (parse box) (parse value))]
@@ -156,7 +157,13 @@
     [(withS bindings body) (app (fun (map bindingS-name bindings) (desugar body))
                                 (map (λ (v) (desugar (bindingS-value v))) bindings))]
     [(withS* (cons x xs) body) (desugar (withS (list x) (if (empty? xs) body (withS* xs body))))]
-    [(recS bindings body) (rec (aux-parse-binding bindings) (desugar body))]
+    ; Hice manejé así el desugar del recS para que fuera más sencilla su manipulación
+    ; en el interp.
+    [(recS bindings body) (let ([parsed-bindings (aux-parse-binding bindings)])
+                            (if (empty? parsed-bindings)
+                                (desugar body)
+                                (rec (list (car parsed-bindings))
+                                  (rec (cdr parsed-bindings) (desugar body)))))]
     [(funS params body) (fun params (desugar body))]
     [(appS fun-expr args) (app (desugar fun-expr) (map desugar args))]
     [(throwsS exception-id) (throws exception-id)]
