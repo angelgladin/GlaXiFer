@@ -78,7 +78,7 @@
      (v*s (let/cc k (exceptionV exception-id k)) store)]
     [(try/catch bindings body)
      ;; INCOMPLETO :(
-     (let* ([expr-body (strict (interp-aux body env))]
+     (let* ([expr-body (strict (interp-aux body env store))]
             ; Función anónima que devolverá el binding de la excepción, cabe
             ; resaltar que nunca devolverá 'nil porque solo se llamará en caso de
             ; que se tenga un excepción, por eso lo definí como función.
@@ -90,7 +90,7 @@
                         (binding-name (catched-exception (exception-id)))))
            ; En caso de que se haya detecatado una excepción
            (v*s ((exceptionV-continuation expr-body) (interp-aux (binding-value (catched-exception (exception-id))) env)) store)
-           (v*s expr-body store)))]
+           expr-body))]
     
     [(newbox box)
      (let* ([location (nextlocation)]
