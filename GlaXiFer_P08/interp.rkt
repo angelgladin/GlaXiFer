@@ -8,6 +8,7 @@
 -                                Análisis semántico                                 -
 -                                                                                   -
 -----------------------------------------------------------------------------------|#
+(require racket/trace)
 
 (define current-location (box -1))
 
@@ -19,23 +20,25 @@
 ;; Función encargada de interpretar el árbol de sintaxis abstracta generado por el
 ;; parser. El intérprete requiere un ambiente de evaluación en esta versión para
 ;; buscar el valor de los identificadores.
-;; interp: BERCFBAEL/L Env Store -> ERCFBAEL/L-Value
+;; interp: BERCFBAEL/L Env Store -> BERCFBAEL/L-Value
 (define (interp expr env store)
   (v*s-value (interp-aux expr env store)))
 
-;; Wrapper del `interp`. 
+;; Wrapper de la función `interp`. 
 ;; interp-aux: BERCFBAEL/L Env Store -> Value*Store
 (define (interp-aux expr env store)
-    (match expr
+  (match expr
     [(id i) (v*s (store-lookup (env-lookup i env) store) store)]
     [(num n) (v*s (numV n) store)]
     [(bool b) (v*s (boolV b) store)]
     [(lisT elems) (let ([interpreted-args (carry-store-to-last-expr elems env store '())])
                     (v*s (listV (lv*s-value interpreted-args)) (lv*s-store interpreted-args)))]
-    [(op f args) (let ([interpreted-args (carry-store-to-last-expr args env store '())])
-                   (v*s (opf f (lv*s-value interpreted-args)) (lv*s-store interpreted-args)))]
+    [(op f args) (let* ([interpreted-args (carry-store-to-last-expr args env store '())]
+                        [new-store (lv*s-store interpreted-args)]
+                        [unboxed-args (map (λ (x) (strict x new-store)) (lv*s-value interpreted-args))])
+                   (v*s (opf f unboxed-args) new-store))]
     [(iF expr then-expr else-expr)
-     (let* ([cond (strict (interp-aux expr env store))]
+     (let* ([cond (strict (interp-aux expr env store) store)]
             [cond-value (v*s-value cond)]
             [cond-store (v*s-store cond)])
        (if (exceptionV? cond-value)
@@ -43,38 +46,33 @@
            (if (boolV-b cond-value)
                (interp-aux then-expr env cond-store)
                (interp-aux else-expr env cond-store))))]
-    [(fun params body) (v*s (closureV params body env) store)] 
-
-    [(rec bindings body)
+    [(fun params body) (v*s (closureV params body env) store)]
+    ; Por como implementé el rec en el desugar aseguro que la cardinalidad de los
+    ; bindings forzosamente será 1.
+    [(rec (cons (binding name value) empty) body)
      (let* ([location (nextlocation)]
-            [new-env (aRecSub (binding-name (second bindings)) location env)]
-            [args (list (binding-value (second bindings)))]
-            [result (interp-aux (app (binding-value (first bindings)) args) env store)]
+            [new-env (aSub name location env)]
+            [result (interp-aux value new-env store)]
             [result-value (v*s-value result)]
             [result-store (v*s-store result)]
             [new-store (aSto location result-value result-store)])
-       (interp-aux body new-env new-store))]
-      
-    [(app fun-expr arg)
-     (let* ([fun-res (strict (interp-aux fun-expr env store))]
-            [fun-res-val (v*s-value fun-res)]
-            [fun-res-store (v*s-store fun-res)]
-            [arg-res (interp arg env fun-res-store)]
-            [arg-res-val (v*s-value arg-res)]
-            [arg-res-store (v*s-store arg-res)]
-            [location (nextlocation)])
-      (if (exceptionV? fun-res-val)
-           (v*s fun-res-val fun-res-store)
-           (interp-aux
-            (closureV-body fun-res-val)
-            (aSub
-             (first (closureV-param fun-res-val))
-             location
-             (closureV-env fun-res-val))
-            (aSto
-             location
-             arg-res-val
-             arg-res-store))))]
+       (interp-aux
+        body
+        new-env
+        new-store))]
+    [(app fun-expr args)(let* ([fun-res (interp-aux fun-expr env store)]
+                               [fun-res-store (v*s-store fun-res)]
+                               [fun-res-val (strict (v*s-value fun-res) store)])
+                          (if (exceptionV? fun-res-val)
+                              (v*s fun-res-val fun-res-store)
+                              (let* ([binded-env-store (bind-env-store (closureV-params fun-res-val)
+                                                                       args
+                                                                       (closureV-env fun-res-val)
+                                                                       fun-res-store)]
+                                     [new-env (e*s-env binded-env-store)]
+                                     [new-store (e*s-store binded-env-store)]
+                                     [closure-body (closureV-body fun-res-val)])
+                                (interp-aux closure-body new-env new-store))))]
     [(throws exception-id)
      (v*s (let/cc k (exceptionV exception-id k)) store)]
     [(try/catch bindings body)
@@ -90,7 +88,7 @@
                 (equal? (exceptionV-exception-id expr-body)
                         (binding-name (catched-exception (exception-id)))))
            ; En caso de que se haya detecatado una excepción
-           ((exceptionV-continuation expr-body) (interp-aux (binding-value (catched-exception (exception-id))) env))
+           (v*s ((exceptionV-continuation expr-body) (interp-aux (binding-value (catched-exception (exception-id))) env)) store)
            expr-body))]
     
     [(newbox box)
@@ -101,16 +99,16 @@
        (v*s (boxV location) (aSto location box-value box-store)))]
     [(setbox box value)
      (let* ([boxv (interp-aux box env store)]
-            [boxv-value (v*s-value boxv)]
             [boxv-store (v*s-store boxv)]
+            [boxv-value (strict (v*s-value boxv) boxv-store)]
             [val (interp-aux value env boxv-store)]
-            [val-value (v*s-value val)]
+            [val-value (strict (v*s-value val) store)]
             [val-store (v*s-store val)])
        (v*s val-value (aSto (boxV-location boxv-value) val-value val-store)))]
     [(openbox box)
      (let* ([boxv (interp-aux box env store)]
-            [box-value (v*s-value boxv)]
-            [box-store (v*s-store boxv)])
+            [box-store (v*s-store boxv)]
+            [box-value (strict (v*s-value boxv) box-store)])
        (v*s (store-lookup (boxV-location box-value) box-store) box-store))]
     [(seqn actions)
      (letrec ([carry-store-and-execute-last-action
@@ -119,18 +117,21 @@
                                        [a1 (interp-aux head env store-aux)]
                                        [a1-store (v*s-store a1)])
                                   (match tail
-                                    ['() a1]
+                                    ['() (interp a1 env a1-store)]
                                     [else (carry-store-and-execute-last-action tail a1-store)])))])
        (carry-store-and-execute-last-action actions store))]))
+
+
 
 ;; Función auxiliar encargada de evaluar la i-ésima expresión de una lista de
 ;; BERCFBAEL/L para pasarle al (i+1)-ésimo elemento el store anterior.
 ;; Se utilizó la técnica de recursión de cola, para esto `acc` se tomó como acumulador.
-;; El acumulador será una lista de BERCFBAEL/L-Value
+;; El acumulador será un List-Value*Store. Se hizo este tipo de dato para envolver
+;; los parámetros.
 ;; carry-store-to-last-expr: (listof BERCFBAEL/L) Env Store list -> List-Value*Store
 (define (carry-store-to-last-expr args env store acc)
   (match args
-    ; Caso base donde se ha explorado toda la lista de argumento. Como se fueron
+    ; Caso base donde se ha explarado toda la lista de argumento. Como se fueron
     ; agregando los elementos al acumulador en la cabeza, la lista resultante está
     ; al revés es por eso que la volteamos al final.
     ['() (lv*s (reverse acc) store)]
@@ -138,13 +139,40 @@
     ; el store. Obtenemos el store porque queremos pasarle el store al (i+1)-ésimo
     ; elemento. En nuestro acumulador pegamos a la cabeza el valor del primer elemento.
     [(cons x xs)
-     (let* ([first (strict (interp-aux x env store))]
+     (let* ([first (strict (interp-aux x env store) store)]
             [first-val (v*s-value first)]
             [first-store (v*s-store first)])
        (carry-store-to-last-expr xs env first-store (cons first-val acc)))]))
 
 
-;; Función auxiliar que nos devuelve el valor asociado a un identificador.
+;(trace interp-aux)
+
+;; Función auxiliar que va "emparejando" los parametros del ambiente con los del store.
+;; Al final regresará un par con el ambiente y el store con los valores.
+;; bind-env-store: (listof symbol) (listof BERCFBAEL/L) Env Store -> Env*Store
+(define (bind-env-store params vals env store)
+  (match params
+    ['() (e*s env store)]
+    [(cons head-params tail-params)
+     (let* ([head-vals (car vals)]
+            [tail-vals (cdr vals)]
+            [location (nextlocation)]
+            [new-env (aSub head-params location env)]
+            [new-store (aSto location (exprV head-vals new-env) store)])
+       (bind-env-store tail-params tail-vals new-env new-store))]))
+
+;; Función que busca una dirección de memoria en el ambiente indicado.
+;; env-lookup: symbol Enviroment -> number
+(define (env-lookup id env)
+  (match env
+    [(mtSub) (error 'lookup "Free identifier")]
+    [(aSub sub-id location rest-env)
+     (if (symbol=? id sub-id)
+         location
+         (env-lookup id rest-env))]))
+
+;; Función que busca un valor de acuerdo con la dirección de memoria asociada en el
+;; store indicado.
 ;; lookup: symbol -> BERCFBAEL/L-Value
 (define (store-lookup index store)
   (match store
@@ -154,25 +182,10 @@
          value
          (store-lookup index rest-store))]))
 
-;; Función que busca un valor en el ambiente indicado.
-;; env-lookup: symbol Enviroment -> number
-(define (env-lookup id env)
-  (match env
-    [(mtSub) (error 'lookup "Identificador libre")]
-    [(aSub sub-id location rest-env)
-     (if (symbol=? id sub-id)
-         location
-         (env-lookup id rest-env))]
-    [(aRecSub sub-id location rest-env)
-     (if (symbol=? id sub-id)
-         location
-         (env-lookup id rest-env))]))
-
-
 ;; Función auxiliar que dada un operación y una lista de argumentos,
 ;; aplica dicha aperación a los argumentos.
 ;; En el caso de que se encuentra un excepción, la regresará.
-;; opf: procedure list -> ERCFBAEL/L-Value
+;; opf: procedure (listof BERCFBAEL) -> BERCFBAEL/L-Value
 (define (opf f l)
   ; Obtenemos una lista con la(s) excepción(es) que podría tener los elementos.
   (let ([exceptions (filter exceptionV? l)])
@@ -183,7 +196,7 @@
         ; booleano o una lista.
         (let ([result (apply f (map (λ (v) (match v
                                              ; Extraemos el valor del constructor que tiene
-                                             ; el tipo dato RCFBAEL/L-Value que regresa
+                                             ; el tipo dato BERCFBAEL/L-Value que regresa
                                              ; el intérprete.
                                              [(? numV?) (numV-n v)]
                                              [(? boolV?) (boolV-b v)]
@@ -202,20 +215,9 @@
     ['() #f]
     [(cons x xs) (if (equal? e x) #t (list-contain? xs e))]))
 
-;; Función que fuerza la evaluación de una expresión CFBAE/L-Value.
-;; strict: CFBAE/L-Value -> ERCFBAEL/L-Value
-(define (strict e)
+;; Función que fuerza la evaluación de una expresión BERCFBAEL/L-Value.
+;; strict: BERCFBAEL/L-Value -> BERCFBAEL/L-Value
+(define (strict e store)
   (match e
-    [(exprV expr env) (strict (interp expr env))]
+    [(exprV expr env) (strict (interp expr env store) store)]
     [else e]))
-
-;; Función auxiliar que crea un ambiente y va emparejando los parametros
-;; formales con los argumentos.
-;; create-env: (listof symbol) (listof BERCFBAEL/L)  Env Integer -> Env
-(define (create-env params args env location)
-  (match params
-    ['() env]
-    [(cons x xs)
-     (if (empty? args)
-         (error "Missing arguments")
-         (create-env xs (cdr args) (aSub x (car args) env) location))]))
