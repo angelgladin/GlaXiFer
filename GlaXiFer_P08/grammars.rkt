@@ -9,8 +9,8 @@
 	[listS (elems (listof BERCFWBAEL/L?))]
 	[opS (f procedure?) (args (listof BERCFWBAEL/L?))]
 	[ifS (expr BERCFWBAEL/L?) (then-expr BERCFWBAEL/L?) (else-expr BERCFWBAEL/L?)]
-	[condS (cases (listof ConditionS?))]
-	[withS (bindings bindingS?) (body BERCFWBAEL/L?)]
+	[condS (cases (listof Condition?))]
+	[withS (bindings (listof bindingS?)) (body BERCFWBAEL/L?)]
 	[withS* (bindings (listof bindingS?)) (body BERCFWBAEL/L?)]
 	[recS (bindings (listof bindingS?)) (body BERCFWBAEL/L?)]
 	[funS (params (listof symbol?)) (body BERCFWBAEL/L?)]
@@ -38,16 +38,16 @@
 	[try/catch (bindings (listof Binding?)) (body BERCFBAEL/L?)]
 	[newbox (content BERCFBAEL/L?)]
 	[openbox (box BERCFBAEL/L?)]
-	[setbox (box BERCFBAEL/L?) (content BERCFWBAEL/L?)]
+	[setbox (box BERCFBAEL/L?) (content BERCFBAEL/L?)]
 	[seqn (actions (listof BERCFBAEL/L?))])
 
 ;; TDA para representar los resultados devueltos por el intérprete .
-(define-type ERCFBAEL/L-Value
+(define-type BERCFBAEL/L-Value
 	[numV (n number?)]
 	[boolV (b boolean?)]
-	[closureV (param (listof symbol?)) (body BERCFBAEL/L?) (env Env?)]
+	[closureV (params (listof symbol?)) (body BERCFBAEL/L?) (env Env?)]
 	[exprV (expr BERCFBAEL/L?) (env Env?)]
-	[listV (elems (listof BERCFBAEL/L?))]
+	[listV (elems (listof BERCFBAEL/L-Value?))]
 	[exceptionV (exception-id symbol?) (continuation continuation?)]
 	[boxV (location number?)])
 
@@ -60,23 +60,25 @@
 	[binding (name symbol?) (value BERCFBAEL/L?)])
 
 ;; TDA para representar condiciones .
-(define-type ConditionS
+(define-type Condition
 	[condition (expr BERCFWBAEL/L?) (then-expr BERCFWBAEL/L?)]
 	[else-cond (else-expr BERCFWBAEL/L?)])
 
 ;; TDA para representar los ambientes de evaluación .
 (define-type Env
 	[mtSub]
-  [aSub (name symbol?) (location number?) (env Env?)]
-  [aRecSub (name symbol?) (location number?) (env Env?)])
+	[aSub (name symbol?) (location number?) (env Env?)])
 
 ;; TDA para representar el store
 (define-type Store
 	[mtSto]
-	[aSto (index number?) (value ERCFBAEL/L-Value?) (sto Store?)])
+	[aSto (index number?) (value BERCFBAEL/L-Value?) (sto Store?)])
 
 (define-type Value*Store
-   [v*s (value ERCFBAEL/L-Value?) (store Store?)])
+   [v*s (value BERCFBAEL/L-Value?) (store Store?)])
 
 (define-type List-Value*Store
-  [lv*s (value (listof ERCFBAEL/L-Value?)) (store Store?)])
+  [lv*s (value (listof BERCFBAEL/L-Value?)) (store Store?)])
+
+(define-type Env*Store
+  [e*s (env Env?) (store Store?)])
